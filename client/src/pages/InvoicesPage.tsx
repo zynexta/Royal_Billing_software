@@ -74,38 +74,40 @@ export const InvoicesPage: React.FC = () => {
       const res = await invoiceService.getWhatsAppShare(invId);
       const { whatsappUrl, text } = res.data.data;
 
-      let pdfBlob: Blob | null = null;
-      try {
-        const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invId));
-        if (pdfRes.ok) {
-          pdfBlob = await pdfRes.blob();
+      // Check if on a mobile device that supports native file sharing
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile && typeof navigator.share === 'function' && invoiceNumber) {
+        try {
+          const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invId));
+          if (pdfRes.ok) {
+            const pdfBlob = await pdfRes.blob();
+            const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: 'application/pdf' });
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+              await navigator.share({
+                title: `Invoice ${invoiceNumber}`,
+                text: text,
+                files: [pdfFile],
+              });
+              toast.success('Invoice PDF shared successfully!');
+              return;
+            }
+          }
+        } catch (shareErr) {
+          console.warn('Native mobile share failed or canceled, falling back to direct WhatsApp link', shareErr);
         }
-      } catch (e) {
-        console.warn('Could not fetch PDF blob for Web Share', e);
       }
 
-      if (pdfBlob && typeof navigator.share === 'function' && invoiceNumber) {
-        const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: 'application/pdf' });
-        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-          await navigator.share({
-            title: `Invoice ${invoiceNumber}`,
-            text: text,
-            files: [pdfFile],
-          });
-          toast.success('Invoice PDF shared successfully!');
-          return;
-        }
-      }
-
+      // Universal reliable flow (Desktop Web & Mobile Fallback):
       if (invoiceNumber) {
         handleDownloadPDF(invId, invoiceNumber);
       }
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      toast.info('📄 PDF downloaded! WhatsApp chat opened — drag and drop the PDF into the chat to send as file.');
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        toast.error('Failed to generate WhatsApp share');
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        toast.info('📄 PDF downloaded! WhatsApp chat opened — attach the downloaded PDF to send as file.');
       }
+    } catch (err: any) {
+      console.error('WhatsApp share error:', err);
+      toast.error('Failed to generate WhatsApp share');
     }
   };
 
@@ -198,12 +200,12 @@ export const InvoicesPage: React.FC = () => {
             </div>
 
             {/* Status Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl overflow-x-auto w-full sm:w-auto shadow-soft">
+            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl overflow-x-auto no-scrollbar w-full sm:w-auto shadow-soft py-1">
               {statusOptions.map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
+                  className={`px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
                     statusFilter === st
                       ? 'bg-black text-white shadow-soft scale-[1.02]'
                       : 'text-slate-600 hover:text-black hover:bg-slate-100'
@@ -226,6 +228,11 @@ export const InvoicesPage: React.FC = () => {
 
         {/* Invoice Data Table - Premium Monochrome Elevated Table */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft overflow-hidden">
+          {/* Mobile Swipe Hint */}
+          <div className="md:hidden px-4 py-2 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+            <span>Swipe table left/right to view all columns →</span>
+          </div>
+
           {loading ? (
             <div className="p-16 text-center text-xs text-mutedText">Loading invoice ledger...</div>
           ) : invoices.length === 0 ? (
@@ -245,17 +252,17 @@ export const InvoicesPage: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50/70 border-b border-slate-200/80 text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                    <th className="py-4 px-6">Invoice #</th>
-                    <th className="py-4 px-4">Date</th>
-                    <th className="py-4 px-4">Client</th>
-                    <th className="py-4 px-4">Project</th>
-                    <th className="py-4 px-4 text-right">Taxable</th>
-                    <th className="py-4 px-4 text-right">GST Total</th>
-                    <th className="py-4 px-4 text-right">Grand Total</th>
-                    <th className="py-4 px-4 text-right">Paid</th>
-                    <th className="py-4 px-4 text-right">Balance Due</th>
-                    <th className="py-4 px-4 text-center">Status</th>
-                    <th className="py-4 px-6 text-right">Actions</th>
+                    <th className="py-3.5 px-4 sm:px-6">Invoice #</th>
+                    <th className="py-3.5 px-3 sm:px-4">Date</th>
+                    <th className="py-3.5 px-3 sm:px-4">Client</th>
+                    <th className="py-3.5 px-3 sm:px-4">Project</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-right">Taxable</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-right">GST Total</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-right">Grand Total</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-right">Paid</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-right">Balance Due</th>
+                    <th className="py-3.5 px-3 sm:px-4 text-center">Status</th>
+                    <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100/90">

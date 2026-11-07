@@ -96,43 +96,38 @@ export const InvoiceDetailsPage: React.FC = () => {
       const res = await invoiceService.getWhatsAppShare(invoice._id);
       const { whatsappUrl, text } = res.data.data;
 
-      // 1. Fetch PDF blob
-      let pdfBlob: Blob | null = null;
-      try {
-        const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invoice._id));
-        if (pdfRes.ok) {
-          pdfBlob = await pdfRes.blob();
-        }
-      } catch (e) {
-        console.warn('Could not fetch PDF blob for Web Share', e);
-      }
-
-      // 2. Try Native Web Share API (Supported on Mobile / Tablets / Supported OS)
-      // This directly attaches the PDF document into WhatsApp!
-      if (pdfBlob && typeof navigator.share === 'function') {
-        const pdfFile = new File([pdfBlob], `${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
-        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-          await navigator.share({
-            title: `Invoice ${invoice.invoiceNumber}`,
-            text: text,
-            files: [pdfFile],
-          });
-          toast.success('Invoice PDF shared successfully!');
-          return;
+      // Try Native Web Share API only on mobile devices supporting file sharing
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile && typeof navigator.share === 'function') {
+        try {
+          const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invoice._id));
+          if (pdfRes.ok) {
+            const pdfBlob = await pdfRes.blob();
+            const pdfFile = new File([pdfBlob], `${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+              await navigator.share({
+                title: `Invoice ${invoice.invoiceNumber}`,
+                text: text,
+                files: [pdfFile],
+              });
+              toast.success('Invoice PDF shared successfully!');
+              return;
+            }
+          }
+        } catch (shareErr) {
+          console.warn('Native mobile share failed or canceled, falling back to direct WhatsApp link', shareErr);
         }
       }
 
-      // 3. Fallback for Desktop Web:
-      // Download the PDF automatically to user's device
+      // Universal Reliable Fallback: Download PDF + Open WhatsApp
       handleDownloadPDF();
-
-      // Open WhatsApp Web with the prepared message
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      toast.info('📄 PDF downloaded! WhatsApp chat opened — drag and drop the PDF into the chat to send as file.');
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        toast.error('Failed to launch WhatsApp share');
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        toast.info('📄 PDF downloaded! WhatsApp chat opened — attach the downloaded PDF to send as file.');
       }
+    } catch (err: any) {
+      console.error('WhatsApp share error:', err);
+      toast.error('Failed to launch WhatsApp share');
     } finally {
       setIsActionLoading(false);
     }

@@ -20,6 +20,7 @@ import { Header } from '../components/layout/Header';
 import { invoiceService } from '../services/api';
 import { Invoice } from '../types';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '../utils/formatters';
+import { openWhatsAppDirect } from '../utils/whatsapp';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { PaymentModal } from '../components/payments/PaymentModal';
 import { StatusChangeModal } from '../components/invoices/StatusChangeModal';
@@ -48,9 +49,6 @@ export const InvoicesPage: React.FC = () => {
   const [targetStatusForModal, setTargetStatusForModal] = useState<string>('Paid');
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
-  // WhatsApp Share Loading state
-  const [sharingInvoiceId, setSharingInvoiceId] = useState<string | null>(null);
-
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -73,29 +71,13 @@ export const InvoicesPage: React.FC = () => {
     return () => clearTimeout(delay);
   }, [search, statusFilter]);
 
-  const handleWhatsAppShare = async (invId: string, invoiceNumber?: string) => {
+  const handleWhatsAppShare = (inv: Invoice) => {
     try {
-      setSharingInvoiceId(invId);
-      toast.info('Opening WhatsApp & preparing invoice...');
-
-      const res = await invoiceService.getWhatsAppShare(invId);
-      const { whatsappUrl } = res.data.data;
-
-      // 1. Immediately trigger PDF invoice download
-      if (invoiceNumber) {
-        handleDownloadPDF(invId, invoiceNumber);
-      }
-
-      // 2. Open WhatsApp Web or App with pre-filled invoice message
-      if (whatsappUrl) {
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        toast.success('WhatsApp chat opened! PDF invoice downloaded.');
-      }
+      openWhatsAppDirect(inv);
+      toast.success('WhatsApp chat opened!');
     } catch (err: any) {
       console.error('WhatsApp share error:', err);
-      toast.error('Failed to open WhatsApp. Please check invoice details.');
-    } finally {
-      setSharingInvoiceId(null);
+      toast.error('Failed to open WhatsApp');
     }
   };
 
@@ -358,20 +340,11 @@ export const InvoicesPage: React.FC = () => {
                           </button>
 
                           <button
-                            disabled={sharingInvoiceId === inv._id}
-                            onClick={() => handleWhatsAppShare(inv._id, inv.invoiceNumber)}
-                            title={sharingInvoiceId === inv._id ? "Opening WhatsApp..." : "Share on WhatsApp"}
-                            className={`p-1.5 rounded-lg transition-all ${
-                              sharingInvoiceId === inv._id
-                                ? 'text-emerald-600 bg-emerald-50 scale-110 cursor-wait'
-                                : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 active:scale-95'
-                            }`}
+                            onClick={() => handleWhatsAppShare(inv)}
+                            title="Share on WhatsApp"
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors active:scale-95"
                           >
-                            {sharingInvoiceId === inv._id ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-                            ) : (
-                              <Share2 className="w-4 h-4" />
-                            )}
+                            <Share2 className="w-4 h-4" />
                           </button>
 
                           <button

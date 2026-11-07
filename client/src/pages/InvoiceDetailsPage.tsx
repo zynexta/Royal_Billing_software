@@ -21,6 +21,7 @@ import { Header } from '../components/layout/Header';
 import { invoiceService } from '../services/api';
 import { Invoice, Payment } from '../types';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '../utils/formatters';
+import { openWhatsAppDirect } from '../utils/whatsapp';
 import { PaymentModal } from '../components/payments/PaymentModal';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { StatusChangeModal } from '../components/invoices/StatusChangeModal';
@@ -90,27 +91,14 @@ export const InvoiceDetailsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const handleWhatsAppShare = async () => {
+  const handleWhatsAppShare = () => {
+    if (!invoice) return;
     try {
-      setIsActionLoading(true);
-      toast.info('Opening WhatsApp & preparing invoice...');
-
-      const res = await invoiceService.getWhatsAppShare(invoice._id);
-      const { whatsappUrl } = res.data.data;
-
-      // 1. Download PDF invoice immediately
-      handleDownloadPDF();
-
-      // 2. Open WhatsApp Web or Mobile App
-      if (whatsappUrl) {
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        toast.success('WhatsApp chat opened! PDF invoice downloaded.');
-      }
+      openWhatsAppDirect(invoice);
+      toast.success('WhatsApp chat opened with invoice!');
     } catch (err: any) {
       console.error('WhatsApp share error:', err);
-      toast.error('Failed to open WhatsApp. Please check invoice details.');
-    } finally {
-      setIsActionLoading(false);
+      toast.error('Failed to open WhatsApp');
     }
   };
 

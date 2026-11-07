@@ -24,6 +24,7 @@ import { openWhatsAppDirect } from '../utils/whatsapp';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { PaymentModal } from '../components/payments/PaymentModal';
 import { StatusChangeModal } from '../components/invoices/StatusChangeModal';
+import { WhatsAppShareModal } from '../components/invoices/WhatsAppShareModal';
 import { useToast } from '../context/ToastContext';
 
 export const InvoicesPage: React.FC = () => {
@@ -48,6 +49,9 @@ export const InvoicesPage: React.FC = () => {
   const [invoiceForStatusModal, setInvoiceForStatusModal] = useState<Invoice | null>(null);
   const [targetStatusForModal, setTargetStatusForModal] = useState<string>('Paid');
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+
+  // WhatsApp Share Modal
+  const [invoiceForShare, setInvoiceForShare] = useState<Invoice | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -340,7 +344,7 @@ export const InvoicesPage: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleWhatsAppShare(inv)}
+                            onClick={() => setInvoiceForShare(inv)}
                             title="Share on WhatsApp"
                             className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors active:scale-95"
                           >
@@ -396,6 +400,13 @@ export const InvoicesPage: React.FC = () => {
         isLoading={isStatusUpdating}
         onClose={() => setInvoiceForStatusModal(null)}
         onConfirm={handleConfirmStatusChange}
+      />
+
+      {/* WhatsApp Share Options Modal */}
+      <WhatsAppShareModal
+        isOpen={!!invoiceForShare}
+        invoice={invoiceForShare}
+        onClose={() => setInvoiceForShare(null)}
       />
     </>
   );

@@ -38,3 +38,4 @@ export function openWhatsAppDirect(invoice: Invoice) {
     window.location.href = url;
   }
 }
+

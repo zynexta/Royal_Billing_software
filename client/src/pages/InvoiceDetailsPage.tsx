@@ -25,6 +25,7 @@ import { openWhatsAppDirect } from '../utils/whatsapp';
 import { PaymentModal } from '../components/payments/PaymentModal';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { StatusChangeModal } from '../components/invoices/StatusChangeModal';
+import { WhatsAppShareModal } from '../components/invoices/WhatsAppShareModal';
 import { useToast } from '../context/ToastContext';
 
 export const InvoiceDetailsPage: React.FC = () => {
@@ -41,6 +42,7 @@ export const InvoiceDetailsPage: React.FC = () => {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [targetStatusForModal, setTargetStatusForModal] = useState<string>('Paid');
   const [cancelReason, setCancelReason] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -239,7 +241,7 @@ export const InvoiceDetailsPage: React.FC = () => {
             </button>
 
             <button
-              onClick={handleWhatsAppShare}
+              onClick={() => setIsShareModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 shadow-soft transition-colors"
             >
               <Share2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -543,6 +545,13 @@ export const InvoiceDetailsPage: React.FC = () => {
         isLoading={isActionLoading}
         onClose={() => setIsStatusModalOpen(false)}
         onConfirm={handleConfirmStatusChange}
+      />
+
+      {/* WhatsApp Share Modal */}
+      <WhatsAppShareModal
+        isOpen={isShareModalOpen}
+        invoice={invoice}
+        onClose={() => setIsShareModalOpen(false)}
       />
     </>
   );

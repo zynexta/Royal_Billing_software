@@ -736,17 +736,19 @@ export async function getWhatsAppShareText(req: Request, res: Response) {
     const projectName = invoice.projectName;
     const phone = invoice.clientSnapshot?.phone || '';
 
+    const pdfUrl = `https://royal-billing-software.onrender.com/api/invoices/${invoice._id}/pdf`;
+
     const text =
       `Hello ${clientName},\n\n` +
-      `Your invoice for *${projectName}* is ready.\n\n` +
+      `Your official Tax Invoice for *${projectName}* is ready.\n\n` +
+      `📄 *View / Download Invoice PDF:*\n${pdfUrl}\n\n` +
       `*Invoice Number:* ${invoice.invoiceNumber}\n` +
       `*Invoice Date:* ${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}\n` +
       `*Invoice Amount:* ${formatINR(invoice.grandTotal)}\n` +
       `*Amount Received:* ${formatINR(received)}\n` +
       `*Balance Due:* ${formatINR(balance)}\n` +
       `*Payment Status:* ${invoice.status.toUpperCase()}\n\n` +
-      `Please find your invoice attached / contact us on WhatsApp at +91 88910 03031 for any billing queries.\n\n` +
-      `Thank you for your business!`;
+      `Thank you for partnering with Royal Engineering & Construction!`;
 
     // Strip non-digits for WhatsApp API link (defaults to 8891003031 if not provided)
     const cleanPhone = phone.replace(/[^0-9]/g, '') || '8891003031';

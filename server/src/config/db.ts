@@ -22,12 +22,17 @@ export async function connectDB(): Promise<void> {
     if (ENV.NODE_ENV !== 'production') {
       try {
         console.log('[DB] Launching embedded MongoDB memory server for development fallback...');
-        const { MongoMemoryServer } = await import('mongodb-memory-server');
-        const mongod = await MongoMemoryServer.create();
-        const uri = mongod.getUri();
-        await mongoose.connect(uri);
-        isConnected = true;
-        console.log(`[DB] Connected to Development In-Memory MongoDB at: ${uri}`);
+        // @ts-ignore
+        const memModule: any = await import('' + 'mongodb-memory-server').catch(() => null);
+        if (memModule?.MongoMemoryServer) {
+          const mongod = await memModule.MongoMemoryServer.create();
+          const uri = mongod.getUri();
+          await mongoose.connect(uri);
+          isConnected = true;
+          console.log(`[DB] Connected to Development In-Memory MongoDB at: ${uri}`);
+        } else {
+          throw error;
+        }
       } catch (memErr) {
         console.error('[DB] Failed to launch in-memory MongoDB:', memErr);
         throw error;

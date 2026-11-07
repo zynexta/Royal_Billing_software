@@ -93,41 +93,22 @@ export const InvoiceDetailsPage: React.FC = () => {
   const handleWhatsAppShare = async () => {
     try {
       setIsActionLoading(true);
+      toast.info('Opening WhatsApp & preparing invoice...');
+
       const res = await invoiceService.getWhatsAppShare(invoice._id);
-      const { whatsappUrl, text } = res.data.data;
+      const { whatsappUrl } = res.data.data;
 
-      // Try Native Web Share API only on mobile devices supporting file sharing
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (isMobile && typeof navigator.share === 'function') {
-        try {
-          const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invoice._id));
-          if (pdfRes.ok) {
-            const pdfBlob = await pdfRes.blob();
-            const pdfFile = new File([pdfBlob], `${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-              await navigator.share({
-                title: `Invoice ${invoice.invoiceNumber}`,
-                text: text,
-                files: [pdfFile],
-              });
-              toast.success('Invoice PDF shared successfully!');
-              return;
-            }
-          }
-        } catch (shareErr) {
-          console.warn('Native mobile share failed or canceled, falling back to direct WhatsApp link', shareErr);
-        }
-      }
-
-      // Universal Reliable Fallback: Download PDF + Open WhatsApp
+      // 1. Download PDF invoice immediately
       handleDownloadPDF();
+
+      // 2. Open WhatsApp Web or Mobile App
       if (whatsappUrl) {
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        toast.info('📄 PDF downloaded! WhatsApp chat opened — attach the downloaded PDF to send as file.');
+        toast.success('WhatsApp chat opened! PDF invoice downloaded.');
       }
     } catch (err: any) {
       console.error('WhatsApp share error:', err);
-      toast.error('Failed to launch WhatsApp share');
+      toast.error('Failed to open WhatsApp. Please check invoice details.');
     } finally {
       setIsActionLoading(false);
     }

@@ -14,6 +14,7 @@ import {
   FileDown,
   Edit2,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { invoiceService } from '../services/api';
@@ -47,6 +48,9 @@ export const InvoicesPage: React.FC = () => {
   const [targetStatusForModal, setTargetStatusForModal] = useState<string>('Paid');
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
+  // WhatsApp Share Loading state
+  const [sharingInvoiceId, setSharingInvoiceId] = useState<string | null>(null);
+
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -71,43 +75,27 @@ export const InvoicesPage: React.FC = () => {
 
   const handleWhatsAppShare = async (invId: string, invoiceNumber?: string) => {
     try {
+      setSharingInvoiceId(invId);
+      toast.info('Opening WhatsApp & preparing invoice...');
+
       const res = await invoiceService.getWhatsAppShare(invId);
-      const { whatsappUrl, text } = res.data.data;
+      const { whatsappUrl } = res.data.data;
 
-      // Check if on a mobile device that supports native file sharing
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (isMobile && typeof navigator.share === 'function' && invoiceNumber) {
-        try {
-          const pdfRes = await fetch(invoiceService.getPDFDownloadUrl(invId));
-          if (pdfRes.ok) {
-            const pdfBlob = await pdfRes.blob();
-            const pdfFile = new File([pdfBlob], `${invoiceNumber}.pdf`, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-              await navigator.share({
-                title: `Invoice ${invoiceNumber}`,
-                text: text,
-                files: [pdfFile],
-              });
-              toast.success('Invoice PDF shared successfully!');
-              return;
-            }
-          }
-        } catch (shareErr) {
-          console.warn('Native mobile share failed or canceled, falling back to direct WhatsApp link', shareErr);
-        }
-      }
-
-      // Universal reliable flow (Desktop Web & Mobile Fallback):
+      // 1. Immediately trigger PDF invoice download
       if (invoiceNumber) {
         handleDownloadPDF(invId, invoiceNumber);
       }
+
+      // 2. Open WhatsApp Web or App with pre-filled invoice message
       if (whatsappUrl) {
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-        toast.info('📄 PDF downloaded! WhatsApp chat opened — attach the downloaded PDF to send as file.');
+        toast.success('WhatsApp chat opened! PDF invoice downloaded.');
       }
     } catch (err: any) {
       console.error('WhatsApp share error:', err);
-      toast.error('Failed to generate WhatsApp share');
+      toast.error('Failed to open WhatsApp. Please check invoice details.');
+    } finally {
+      setSharingInvoiceId(null);
     }
   };
 
@@ -370,11 +358,20 @@ export const InvoicesPage: React.FC = () => {
                           </button>
 
                           <button
+                            disabled={sharingInvoiceId === inv._id}
                             onClick={() => handleWhatsAppShare(inv._id, inv.invoiceNumber)}
-                            title="Share on WhatsApp"
-                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title={sharingInvoiceId === inv._id ? "Opening WhatsApp..." : "Share on WhatsApp"}
+                            className={`p-1.5 rounded-lg transition-all ${
+                              sharingInvoiceId === inv._id
+                                ? 'text-emerald-600 bg-emerald-50 scale-110 cursor-wait'
+                                : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 active:scale-95'
+                            }`}
                           >
-                            <Share2 className="w-4 h-4" />
+                            {sharingInvoiceId === inv._id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                            ) : (
+                              <Share2 className="w-4 h-4" />
+                            )}
                           </button>
 
                           <button

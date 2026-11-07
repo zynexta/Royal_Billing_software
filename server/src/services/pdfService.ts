@@ -8,8 +8,8 @@ function getAssetPath(subPath: string): string {
   const candidates = [
     path.resolve(process.cwd(), 'assets', subPath),
     path.resolve(process.cwd(), 'server', 'assets', subPath),
-    path.resolve(__dirname, '../../assets', subPath),
-    path.resolve(__dirname, '../assets', subPath),
+    path.resolve(process.cwd(), '..', 'assets', subPath),
+    path.resolve(process.cwd(), 'dist', 'assets', subPath),
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;

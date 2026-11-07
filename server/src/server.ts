@@ -70,10 +70,10 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Serve frontend static build if available
-const clientDistPath = path.resolve(__dirname, '../../client/dist');
+const clientDistPath = path.resolve(process.cwd(), '../client/dist');
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
-  app.get('*', (req, res, next) => {
+  app.get('*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (req.path.startsWith('/api')) {
       return next();
     }

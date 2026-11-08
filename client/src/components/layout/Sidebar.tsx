@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Users,
   FileText,
+  ClipboardList,
   CreditCard,
   Settings,
   LogOut,
@@ -21,12 +22,33 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
 
-  const navItems = [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { label: 'Clients', to: '/clients', icon: Users },
-    { label: 'Invoices', to: '/invoices', icon: FileText },
-    { label: 'Payments', to: '/payments', icon: CreditCard },
-    { label: 'Settings', to: '/settings', icon: Settings },
+  const navSections = [
+    {
+      title: 'MAIN',
+      items: [
+        { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+        { label: 'Clients', to: '/clients', icon: Users },
+      ],
+    },
+    {
+      title: 'DOCUMENT MANAGEMENT',
+      items: [
+        { label: 'Quotations', to: '/quotations', icon: ClipboardList },
+        { label: 'Tax Invoices', to: '/invoices', icon: FileText },
+      ],
+    },
+    {
+      title: 'FINANCIAL',
+      items: [
+        { label: 'Payments', to: '/payments', icon: CreditCard },
+      ],
+    },
+    {
+      title: 'CONFIGURATION',
+      items: [
+        { label: 'Settings', to: '/settings', icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -69,32 +91,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Navigation Links - Pitch Black Active Buttons */}
-        <div className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-          <div className="px-3 mb-2.5 text-[10px] font-extrabold tracking-widest text-slate-400 uppercase">
-            Main Management
-          </div>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 group ${
-                    isActive
-                      ? 'bg-black text-white shadow-md shadow-black/10 scale-[1.01]'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-black'
-                  }`
-                }
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                  <span>{item.label}</span>
-                </div>
-              </NavLink>
-            );
-          })}
+        <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
+          {navSections.map((sec) => (
+            <div key={sec.title} className="space-y-1">
+              <div className="px-3 mb-1.5 text-[9px] font-black tracking-widest text-slate-400 uppercase">
+                {sec.title}
+              </div>
+              {sec.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 group ${
+                        isActive
+                          ? 'bg-black text-white shadow-md shadow-black/10 scale-[1.01]'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-black'
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                      <span>{item.label}</span>
+                    </div>
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Enterprise Edition Badge */}

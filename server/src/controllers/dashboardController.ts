@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Invoice } from '../models/Invoice.js';
+import { Quotation } from '../models/Quotation.js';
 import { Payment } from '../models/Payment.js';
 import { Client } from '../models/Client.js';
 import { sendError, sendSuccess } from '../utils/response.js';
@@ -35,15 +36,18 @@ export async function getDashboardSummary(req: Request, res: Response) {
     const invoiceQuery: any = { status: { $ne: 'Cancelled' } };
     const paymentQuery: any = { status: 'Completed' };
 
+    const quotationQuery: any = {};
     if (Object.keys(dateFilter).length > 0) {
       invoiceQuery.invoiceDate = dateFilter;
       paymentQuery.paymentDate = dateFilter;
+      quotationQuery.quotationDate = dateFilter;
     }
 
-    const [invoices, payments, clientCount] = await Promise.all([
+    const [invoices, payments, clientCount, quotations] = await Promise.all([
       Invoice.find(invoiceQuery),
       Payment.find(paymentQuery),
       Client.countDocuments({ isArchived: false }),
+      Quotation.find(quotationQuery),
     ]);
 
     const activeInvoices = invoices.filter((inv) => inv.status !== 'Draft' && inv.status !== 'Cancelled');
@@ -80,6 +84,20 @@ export async function getDashboardSummary(req: Request, res: Response) {
     ).length;
     const draftInvoicesCount = invoices.filter((inv) => inv.status === 'Draft').length;
 
+    // Quotation pipeline metrics (completely separate from invoiced financials)
+    const totalQuotations = quotations.length;
+    const sentQuotations = quotations.filter((q) => q.status === 'Sent').length;
+    const pendingApprovalCount = sentQuotations;
+    const acceptedQuotations = quotations.filter((q) => q.status === 'Accepted').length;
+    const convertedQuotations = quotations.filter((q) => q.status === 'Converted').length;
+    const draftQuotationsCount = quotations.filter((q) => q.status === 'Draft').length;
+    const activePipelineQuotations = quotations.filter(
+      (q) => q.status === 'Sent' || q.status === 'Accepted'
+    );
+    const estimatedPipelineValue = round2(
+      activePipelineQuotations.reduce((sum, q) => sum + (q.estimatedGrandTotal || 0), 0)
+    );
+
     return sendSuccess(res, {
       totalInvoices,
       totalProjectValue,
@@ -91,6 +109,15 @@ export async function getDashboardSummary(req: Request, res: Response) {
       pendingInvoicesCount,
       draftInvoicesCount,
       clientCount,
+      quotationSummary: {
+        totalQuotations,
+        sentQuotations,
+        pendingApprovalCount,
+        acceptedQuotations,
+        convertedQuotations,
+        draftQuotationsCount,
+        estimatedPipelineValue,
+      },
     });
   } catch (error) {
     return sendError(res, 'Failed to fetch dashboard summary', 500, (error as Error).message);

@@ -10,6 +10,7 @@ import {
   Plus,
   Users,
   CreditCard,
+  ClipboardList,
   ArrowUpRight,
   Building2,
   Receipt,
@@ -180,6 +181,14 @@ export const DashboardPage: React.FC = () => {
               <span>Add Client</span>
             </button>
 
+            <Link
+              to="/quotations/new"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl shadow-soft transition-all active:scale-[0.98]"
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-slate-700" />
+              <span>New Quotation</span>
+            </Link>
+
             <button
               onClick={() => setIsPaymentModalOpen(true)}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl shadow-soft hover:bg-emerald-100 transition-all active:scale-[0.98]"
@@ -317,6 +326,87 @@ export const DashboardPage: React.FC = () => {
                   {summary?.pendingInvoicesCount || 0} Pending
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quotation Pipeline Overview - Distinct Commercial Estimation Metrics */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-black text-white shadow-soft">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>Quotation Commercial Pipeline</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase font-sans">
+                    Pre-Billing Workflow
+                  </span>
+                </h3>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  Cost estimates &amp; client approval tracking (strictly separated from verified invoice revenue)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/quotations/new"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-black hover:bg-slate-800 rounded-xl transition-all shadow-soft"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Quotation</span>
+              </Link>
+              <Link
+                to="/quotations"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                <span>View Pipeline</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 pt-1">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Quotations</span>
+              <p className="text-xl font-black text-slate-900 font-mono mt-1">
+                {summary?.quotationSummary?.totalQuotations || 0}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Created proposals</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">Sent to Client</span>
+              <p className="text-xl font-black text-amber-800 font-mono mt-1">
+                {summary?.quotationSummary?.sentQuotations || 0}
+              </p>
+              <p className="text-[10px] text-amber-600 mt-0.5">Pending client approval</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Client Accepted</span>
+              <p className="text-xl font-black text-emerald-800 font-mono mt-1">
+                {summary?.quotationSummary?.acceptedQuotations || 0}
+              </p>
+              <p className="text-[10px] text-emerald-600 mt-0.5">Ready for invoice conversion</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-900 text-white shadow-soft">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">Converted</span>
+              <p className="text-xl font-black text-white font-mono mt-1">
+                {summary?.quotationSummary?.convertedQuotations || 0}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Invoiced &amp; linked</p>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Estimated Pipeline</span>
+              <p className="text-lg font-black text-slate-900 font-mono mt-1 truncate">
+                {formatCurrency(summary?.quotationSummary?.estimatedPipelineValue || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Active proposals value</p>
             </div>
           </div>
         </div>

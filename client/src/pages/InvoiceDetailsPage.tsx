@@ -300,6 +300,18 @@ export const InvoiceDetailsPage: React.FC = () => {
                 </select>
               </div>
               <p className="text-xs text-mutedText mt-1 uppercase tracking-wider">{invoice.invoiceType}</p>
+              {invoice.sourceQuotationNumber && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="text-[11px] font-semibold text-slate-500">Created from Quotation:</span>
+                  <Link
+                    to={`/quotations/${invoice.sourceQuotationId}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-mono font-bold text-black bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors"
+                  >
+                    <span>{invoice.sourceQuotationNumber}</span>
+                    <ExternalLink className="w-3 h-3 text-slate-500" />
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="sm:text-right text-xs space-y-1">

@@ -28,6 +28,15 @@ export interface IInvoiceSettings {
   dateFormat: string;
 }
 
+export interface IQuotationSettings {
+  prefix: string;
+  nextNumber: number;
+  defaultValidityDays: number;
+  defaultPaymentTerms: string;
+  defaultNotes?: string;
+  termsAndConditions?: string;
+}
+
 export interface IGSTSettings {
   defaultApplicability: boolean;
   rates: number[];
@@ -47,6 +56,7 @@ export interface IBankDetails {
 export interface ICompanySettings extends Document {
   companyProfile: ICompanyProfile;
   invoiceSettings: IInvoiceSettings;
+  quotationSettings: IQuotationSettings;
   gstSettings: IGSTSettings;
   bankDetails: IBankDetails;
   createdAt: Date;
@@ -83,6 +93,24 @@ const CompanySettingsSchema = new Schema<ICompanySettings>(
       signatureImage: { type: String, default: '' },
       currency: { type: String, default: 'INR' },
       dateFormat: { type: String, default: 'DD/MM/YYYY' },
+    },
+    quotationSettings: {
+      prefix: { type: String, default: 'QT-2026' },
+      nextNumber: { type: Number, default: 1 },
+      defaultValidityDays: { type: Number, default: 30 },
+      defaultPaymentTerms: {
+        type: String,
+        default: 'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%',
+      },
+      defaultNotes: {
+        type: String,
+        default: 'We appreciate the opportunity to submit our cost proposal for your esteemed project.',
+      },
+      termsAndConditions: {
+        type: String,
+        default:
+          '• Rates quoted are valid for 30 days from the date of quotation.\n• Taxes as applicable at the time of final invoicing.\n• Any structural modifications or additional scope will be billed separately upon mutual consent.\n• Work will commence upon receipt of confirmed work order and mobilization advance.',
+      },
     },
     gstSettings: {
       defaultApplicability: { type: Boolean, default: true },

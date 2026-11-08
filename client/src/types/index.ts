@@ -29,6 +29,16 @@ export interface Client {
 }
 
 export type InvoiceStatus = 'Draft' | 'Issued' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Cancelled';
+export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired' | 'Converted';
+export type ApprovalMethod = 'WhatsApp' | 'Phone' | 'In Person' | 'Written Confirmation' | 'Other';
+
+export interface ApprovalDetails {
+  approvedBy: string;
+  approvalDate: string;
+  approvalMethod: ApprovalMethod;
+  approvalNotes?: string;
+}
+
 export type PaymentMethod = 'Cash' | 'UPI' | 'Bank Transfer' | 'Cheque' | 'Other';
 export type SupplyType = 'Intra-State' | 'Inter-State';
 
@@ -94,10 +104,49 @@ export interface Invoice {
   paymentTerms: string;
   status: InvoiceStatus;
   notes?: string;
+  sourceQuotationId?: string;
+  sourceQuotationNumber?: string;
   issuedAt?: string;
   cancelledAt?: string;
   cancellationReason?: string;
   payments?: Payment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Quotation {
+  _id: string;
+  quotationNumber: string;
+  clientId: string | Client;
+  clientSnapshot: ClientSnapshot;
+  companySnapshot?: any;
+  projectName: string;
+  projectLocation?: string;
+  projectDescription?: string;
+  workDetails?: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  discount: {
+    type: 'Fixed' | 'Percentage';
+    value: number;
+    amount: number;
+  };
+  additionalCharges?: number;
+  taxableAmount: number;
+  estimatedGstDetails: GSTBreakdown;
+  estimatedGrandTotal: number;
+  quotationDate: string;
+  validUntil: string;
+  paymentTerms: string;
+  termsAndConditions?: string;
+  notes?: string;
+  status: QuotationStatus;
+  approvalDetails?: ApprovalDetails;
+  sentAt?: string;
+  convertedInvoiceId?: string | Invoice;
+  convertedInvoiceNumber?: string;
+  convertedAt?: string;
+  revisionNumber?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -156,6 +205,14 @@ export interface CompanySettings {
     currency: string;
     dateFormat: string;
   };
+  quotationSettings?: {
+    prefix: string;
+    nextNumber: number;
+    defaultValidityDays: number;
+    defaultPaymentTerms: string;
+    defaultNotes?: string;
+    termsAndConditions?: string;
+  };
   gstSettings: {
     defaultApplicability: boolean;
     rates: number[];
@@ -183,6 +240,15 @@ export interface DashboardSummary {
   pendingInvoicesCount: number;
   draftInvoicesCount: number;
   clientCount: number;
+  quotationSummary?: {
+    totalQuotations: number;
+    sentQuotations: number;
+    pendingApprovalCount: number;
+    acceptedQuotations: number;
+    convertedQuotations: number;
+    draftQuotationsCount: number;
+    estimatedPipelineValue: number;
+  };
 }
 
 export interface DashboardAnalytics {

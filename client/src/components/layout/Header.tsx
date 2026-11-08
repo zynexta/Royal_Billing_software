@@ -66,7 +66,8 @@ export const Header: React.FC<HeaderProps> = ({
 
             <Link
               to="/invoices/new"
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-bold text-white bg-black hover:bg-slate-900 rounded-xl shadow-soft hover:shadow-premium transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 p-2 sm:px-4 sm:py-2 text-xs font-bold text-white bg-black hover:bg-slate-900 rounded-xl shadow-soft hover:shadow-premium transition-all active:scale-[0.98]"
+              title="Create New Invoice"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Invoice</span>
@@ -75,10 +76,11 @@ export const Header: React.FC<HeaderProps> = ({
             <Link
               to="/payments"
               state={{ openAddModal: true }}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl shadow-soft hover:bg-slate-50 transition-all active:scale-[0.98]"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl shadow-soft hover:bg-slate-50 transition-all active:scale-[0.98]"
+              title="Record Payment"
             >
               <CreditCard className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">Record Payment</span>
+              <span>Record Payment</span>
             </Link>
           </>
         ) : (

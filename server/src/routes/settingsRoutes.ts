@@ -3,6 +3,7 @@ import {
   getSettings,
   updateCompanyProfile,
   updateInvoiceSettings,
+  updateQuotationSettings,
   updateGSTSettings,
   updateBankDetails,
 } from '../controllers/settingsController.js';
@@ -15,6 +16,7 @@ router.use(authenticate);
 router.get('/', getSettings);
 router.put('/company', updateCompanyProfile);
 router.put('/invoice', updateInvoiceSettings);
+router.put('/quotation', updateQuotationSettings);
 router.put('/gst', updateGSTSettings);
 router.put('/bank', updateBankDetails);
 

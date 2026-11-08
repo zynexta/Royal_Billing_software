@@ -29,6 +29,8 @@ export interface IInvoice extends Document {
   paymentTerms: string;
   status: InvoiceStatus;
   notes?: string;
+  sourceQuotationId?: mongoose.Types.ObjectId;
+  sourceQuotationNumber?: string;
   issuedAt?: Date;
   cancelledAt?: Date;
   cancellationReason?: string;
@@ -107,6 +109,8 @@ const InvoiceSchema = new Schema<IInvoice>(
       index: true,
     },
     notes: { type: String },
+    sourceQuotationId: { type: Schema.Types.ObjectId, ref: 'Quotation', index: true },
+    sourceQuotationNumber: { type: String, trim: true },
     issuedAt: { type: Date },
     cancelledAt: { type: Date },
     cancellationReason: { type: String },

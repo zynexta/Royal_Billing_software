@@ -76,6 +76,45 @@ export const invoiceService = {
   getPDFDownloadUrl: (id: string) => `${API_BASE_URL}/invoices/${id}/pdf`,
 };
 
+// Quotation Service
+export const quotationService = {
+  getQuotations: (params?: {
+    search?: string;
+    status?: string;
+    clientId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => api.get('/quotations', { params }),
+  getQuotationById: (id: string) => api.get(`/quotations/${id}`),
+  createQuotation: (data: any) => api.post('/quotations', data),
+  updateQuotation: (id: string, data: any) => api.put(`/quotations/${id}`, data),
+  issueQuotation: (id: string) => api.post(`/quotations/${id}/issue`),
+  sendQuotation: (id: string) => api.post(`/quotations/${id}/send`),
+  acceptQuotation: (
+    id: string,
+    data: {
+      approvedBy: string;
+      approvalDate?: string;
+      approvalMethod?: string;
+      approvalNotes?: string;
+    }
+  ) => api.post(`/quotations/${id}/accept`, data),
+  rejectQuotation: (id: string, reason?: string) =>
+    api.post(`/quotations/${id}/reject`, { reason }),
+  convertToInvoice: (
+    id: string,
+    invoiceOverrides?: {
+      invoiceDate?: string;
+      dueDate?: string;
+      notes?: string;
+      paymentTerms?: string;
+    }
+  ) => api.post(`/quotations/${id}/convert-to-invoice`, invoiceOverrides),
+  deleteQuotation: (id: string) => api.delete(`/quotations/${id}`),
+  getWhatsAppShare: (id: string) => api.get(`/quotations/${id}/whatsapp`),
+  getPDFDownloadUrl: (id: string) => `${API_BASE_URL}/quotations/${id}/pdf`,
+};
+
 // Payment Service
 export const paymentService = {
   getPayments: (params?: { search?: string; invoiceId?: string; clientId?: string; status?: string; paymentMethod?: string; startDate?: string; endDate?: string }) =>
@@ -90,6 +129,7 @@ export const settingsService = {
   getSettings: () => api.get('/settings'),
   updateCompany: (data: any) => api.put('/settings/company', data),
   updateInvoiceSettings: (data: any) => api.put('/settings/invoice', data),
+  updateQuotationSettings: (data: any) => api.put('/settings/quotation', data),
   updateGSTSettings: (data: any) => api.put('/settings/gst', data),
   updateBankDetails: (data: any) => api.put('/settings/bank', data),
 };

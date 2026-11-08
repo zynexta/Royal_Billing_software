@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAuditLog extends Document {
   action: string;
-  entityType: 'Invoice' | 'Payment' | 'Client' | 'Settings' | 'Auth';
+  entityType: 'Invoice' | 'Payment' | 'Client' | 'Settings' | 'Auth' | 'Quotation';
   entityId?: string;
   userId?: string;
   userName?: string;
@@ -13,7 +13,7 @@ export interface IAuditLog extends Document {
 const AuditLogSchema = new Schema<IAuditLog>(
   {
     action: { type: String, required: true, index: true },
-    entityType: { type: String, required: true, enum: ['Invoice', 'Payment', 'Client', 'Settings', 'Auth'], index: true },
+    entityType: { type: String, required: true, enum: ['Invoice', 'Payment', 'Client', 'Settings', 'Auth', 'Quotation'], index: true },
     entityId: { type: String },
     userId: { type: String },
     userName: { type: String },

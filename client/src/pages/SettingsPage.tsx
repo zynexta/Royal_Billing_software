@@ -15,6 +15,7 @@ import {
   Info,
   ShieldCheck,
   Eye,
+  ClipboardList,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { settingsService } from '../services/api';
@@ -25,7 +26,7 @@ export const SettingsPage: React.FC = () => {
   const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
   const toast = useToast();
 
-  const [activeTab, setActiveTab] = useState<'company' | 'invoice' | 'signature' | 'bank' | 'gst'>('company');
+  const [activeTab, setActiveTab] = useState<'company' | 'quotation' | 'invoice' | 'signature' | 'bank' | 'gst'>('company');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -60,6 +61,28 @@ export const SettingsPage: React.FC = () => {
       toast.success('Company identity & branding updated successfully');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to save company profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveQuotation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData) return;
+    try {
+      setSaving(true);
+      const qSettings = formData.quotationSettings || {
+        prefix: 'QT-2026',
+        nextNumber: 1,
+        defaultValidityDays: 30,
+        defaultPaymentTerms: 'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%',
+        defaultNotes: 'We appreciate the opportunity to submit our cost proposal for your esteemed project.',
+        termsAndConditions: '• Rates quoted are valid for 30 days from date of issue.\n• Taxes are estimated and applicable as per prevailing GST rules upon final invoice generation.\n• Extra items or structural scope variations will be billed separately upon mutual consent.\n• Mobilization will commence upon acceptance & advance payment.',
+      };
+      await settingsService.updateQuotationSettings(qSettings);
+      toast.success('Quotation numbering & terms updated successfully');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to save quotation settings');
     } finally {
       setSaving(false);
     }
@@ -240,6 +263,7 @@ export const SettingsPage: React.FC = () => {
 
   const tabs = [
     { id: 'company', label: 'Company Profile & Branding', icon: Building },
+    { id: 'quotation', label: 'Quotation Preferences', icon: ClipboardList },
     { id: 'invoice', label: 'Invoice & Terms', icon: FileText },
     { id: 'signature', label: 'Signatory & Signature', icon: FileSignature },
     { id: 'bank', label: 'Bank & UPI Accounts', icon: Landmark },
@@ -585,6 +609,200 @@ export const SettingsPage: React.FC = () => {
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? 'Saving...' : 'Save Company Profile'}</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB: QUOTATION CONFIGURATION & PREFERENCES                */}
+        {/* ========================================================= */}
+        {activeTab === 'quotation' && formData && (
+          <form onSubmit={handleSaveQuotation} className="space-y-6">
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-soft space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <h3 className="text-base font-bold text-slate-900">Quotation Preferences &amp; Numbering</h3>
+                <p className="text-xs text-mutedText mt-0.5">
+                  Configure quotation sequential numbering, default validity period, and standard proposal terms
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Quotation Prefix *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.quotationSettings?.prefix || 'QT-2026'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        quotationSettings: {
+                          ...(formData.quotationSettings || {
+                            prefix: 'QT-2026',
+                            nextNumber: 1,
+                            defaultValidityDays: 30,
+                            defaultPaymentTerms: '',
+                          }),
+                          prefix: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="e.g. QT-2026"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black font-mono font-bold"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Example: {formData.quotationSettings?.prefix || 'QT-2026'}-001
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Next Sequence Counter *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={formData.quotationSettings?.nextNumber ?? 1}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        quotationSettings: {
+                          ...(formData.quotationSettings || {
+                            prefix: 'QT-2026',
+                            nextNumber: 1,
+                            defaultValidityDays: 30,
+                            defaultPaymentTerms: '',
+                          }),
+                          nextNumber: parseInt(e.target.value) || 1,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Default Validity (Days) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={formData.quotationSettings?.defaultValidityDays ?? 30}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        quotationSettings: {
+                          ...(formData.quotationSettings || {
+                            prefix: 'QT-2026',
+                            nextNumber: 1,
+                            defaultValidityDays: 30,
+                            defaultPaymentTerms: '',
+                          }),
+                          defaultValidityDays: parseInt(e.target.value) || 30,
+                        },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black font-mono"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    Number of days from quotation issuance
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Default Payment Schedule / Milestones
+                </label>
+                <input
+                  type="text"
+                  value={formData.quotationSettings?.defaultPaymentTerms || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      quotationSettings: {
+                        ...(formData.quotationSettings || {
+                          prefix: 'QT-2026',
+                          nextNumber: 1,
+                          defaultValidityDays: 30,
+                          defaultPaymentTerms: '',
+                        }),
+                        defaultPaymentTerms: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="e.g. Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%"
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Default Proposal Notes / Greeting
+                </label>
+                <input
+                  type="text"
+                  value={formData.quotationSettings?.defaultNotes || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      quotationSettings: {
+                        ...(formData.quotationSettings || {
+                          prefix: 'QT-2026',
+                          nextNumber: 1,
+                          defaultValidityDays: 30,
+                          defaultPaymentTerms: '',
+                        }),
+                        defaultNotes: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="e.g. We appreciate the opportunity to submit our cost proposal for your esteemed project."
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Default Terms &amp; Conditions (Printed on Quotation PDF)
+                </label>
+                <textarea
+                  rows={5}
+                  value={formData.quotationSettings?.termsAndConditions || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      quotationSettings: {
+                        ...(formData.quotationSettings || {
+                          prefix: 'QT-2026',
+                          nextNumber: 1,
+                          defaultValidityDays: 30,
+                          defaultPaymentTerms: '',
+                        }),
+                        termsAndConditions: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="• Rates quoted are valid for 30 days from date of issue.&#10;• Taxes are estimated and applicable as per prevailing GST rules upon final invoice generation.&#10;• Extra items or structural variations will be billed separately upon mutual consent."
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-black font-mono leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-black hover:bg-slate-900 rounded-xl shadow-soft disabled:opacity-50 transition-all active:scale-[0.98]"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{saving ? 'Saving...' : 'Save Quotation Preferences'}</span>
                 </button>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { AuditLog } from '../models/AuditLog.js';
 
 export async function logAudit(params: {
   action: string;
-  entityType: 'Invoice' | 'Payment' | 'Client' | 'Settings' | 'Auth';
+  entityType: 'Invoice' | 'Payment' | 'Client' | 'Settings' | 'Auth' | 'Quotation';
   entityId?: string;
   userId?: string;
   userName?: string;

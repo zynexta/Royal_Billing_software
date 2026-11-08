@@ -15,8 +15,8 @@ import {
   Calculator,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
-import { clientService, invoiceService, settingsService } from '../services/api';
-import { Client, InvoiceItem, SupplyType, CompanySettings } from '../types';
+import { clientService, invoiceService, settingsService, quotationService } from '../services/api';
+import { Client, InvoiceItem, SupplyType, CompanySettings, Quotation } from '../types';
 import {
   calculateItemAmount,
   calculateSubtotal,
@@ -39,6 +39,10 @@ export const CreateInvoicePage: React.FC = () => {
   const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
 
   const preselectedClientId = location.state?.preselectedClientId;
+  const searchParams = new URLSearchParams(location.search);
+  const fromQuotationId = searchParams.get('fromQuotation');
+  const [sourceQuotationId, setSourceQuotationId] = useState<string | null>(fromQuotationId);
+  const [sourceQuotationNumber, setSourceQuotationNumber] = useState<string>('');
 
   // Master Data
   const [clients, setClients] = useState<Client[]>([]);
@@ -103,6 +107,38 @@ export const CreateInvoicePage: React.FC = () => {
         if (setts.gstSettings) {
           setIsGstApplicable(setts.gstSettings.defaultApplicability);
           setSupplyType(setts.gstSettings.defaultSupplyType || 'Intra-State');
+        }
+
+        // Check if prefilling from an accepted quotation
+        if (fromQuotationId) {
+          return quotationService.getQuotationById(fromQuotationId);
+        }
+        return null;
+      })
+      .then((qRes) => {
+        if (qRes && qRes.data?.data) {
+          const q: Quotation = qRes.data.data;
+          setSourceQuotationId(q._id);
+          setSourceQuotationNumber(q.quotationNumber);
+          const cid = typeof q.clientId === 'object' ? (q.clientId as any)._id : q.clientId;
+          setSelectedClientId(cid);
+          setProjectName(q.projectName || '');
+          setProjectLocation(q.projectLocation || '');
+          setProjectDescription(q.projectDescription || '');
+          setWorkDetails(q.workDetails || '');
+          if (q.items && q.items.length > 0) setItems(q.items);
+          if (q.discount) {
+            setDiscountType(q.discount.type);
+            setDiscountValue(q.discount.value);
+          }
+          if (q.additionalCharges) setAdditionalCharges(q.additionalCharges);
+          if (q.estimatedGstDetails) {
+            setIsGstApplicable(q.estimatedGstDetails.isApplicable);
+            setGstRate(q.estimatedGstDetails.rate);
+            setSupplyType(q.estimatedGstDetails.supplyType);
+          }
+          if (q.paymentTerms) setPaymentTerms(q.paymentTerms);
+          toast.success(`Pre-filled from accepted Quotation ${q.quotationNumber}!`);
         }
       })
       .catch((err) => {
@@ -249,6 +285,8 @@ export const CreateInvoicePage: React.FC = () => {
         paymentTerms,
         notes,
         status: isEditMode ? existingStatus : status,
+        sourceQuotationId: sourceQuotationId || undefined,
+        sourceQuotationNumber: sourceQuotationNumber || undefined,
       };
 
       if (isEditMode) {
@@ -296,6 +334,33 @@ export const CreateInvoicePage: React.FC = () => {
             {isEditMode ? existingInvoiceNumber : `Preview #${settings?.invoiceSettings?.prefix || 'INV-2026'}-XXX`}
           </span>
         </div>
+
+        {sourceQuotationNumber && (
+          <div className="p-4 rounded-2xl bg-black text-white flex items-center justify-between shadow-soft">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-white/10 text-emerald-400">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold">
+                  Converting Quotation <span className="font-mono text-emerald-400">{sourceQuotationNumber}</span> into Tax Invoice
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Client, project scope, line items &amp; rates have been auto-populated. Confirm tax treatment and issue invoice.
+                </p>
+              </div>
+            </div>
+            {sourceQuotationId && (
+              <Link
+                to={`/quotations/${sourceQuotationId}`}
+                target="_blank"
+                className="text-xs text-slate-300 underline hover:text-white"
+              >
+                View Quotation
+              </Link>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Form (2 Cols) */}

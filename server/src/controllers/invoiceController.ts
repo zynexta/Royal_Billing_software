@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Invoice, IInvoice } from '../models/Invoice.js';
+import { Quotation } from '../models/Quotation.js';
 import { Client } from '../models/Client.js';
 import { Payment } from '../models/Payment.js';
 import { CompanySettings } from '../models/CompanySettings.js';
@@ -180,6 +181,8 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
       paymentTerms,
       notes,
       status = 'Draft',
+      sourceQuotationId,
+      sourceQuotationNumber,
     } = req.body;
 
     const client = await Client.findById(clientId);
@@ -253,6 +256,8 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
       paymentTerms: paymentTerms || settings?.invoiceSettings?.defaultPaymentTerms || 'Due upon receipt',
       status: status === 'Issued' ? 'Issued' : 'Draft',
       notes: notes || settings?.invoiceSettings?.defaultNotes,
+      sourceQuotationId: sourceQuotationId || undefined,
+      sourceQuotationNumber: sourceQuotationNumber || undefined,
     };
 
     if (status === 'Issued') {
@@ -261,6 +266,18 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
     }
 
     const invoice = await Invoice.create(invoiceData);
+
+    // If invoice was created from an accepted quotation, update the quotation to Converted
+    if (sourceQuotationId) {
+      await Quotation.findByIdAndUpdate(sourceQuotationId, {
+        $set: {
+          status: 'Converted',
+          convertedInvoiceId: invoice._id,
+          convertedInvoiceNumber: invoice.invoiceNumber,
+          convertedAt: new Date(),
+        },
+      });
+    }
 
     await logAudit({
       action: status === 'Issued' ? 'INVOICE_ISSUED' : 'INVOICE_DRAFT_CREATED',

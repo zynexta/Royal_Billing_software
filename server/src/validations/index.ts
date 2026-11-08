@@ -45,6 +45,8 @@ export const createInvoiceSchema = z.object({
   paymentTerms: z.string().default('Payment due within 15 days.'),
   notes: z.string().optional(),
   status: z.enum(['Draft', 'Issued']).default('Draft'),
+  sourceQuotationId: z.string().optional(),
+  sourceQuotationNumber: z.string().optional(),
 });
 
 export const createPaymentSchema = z.object({

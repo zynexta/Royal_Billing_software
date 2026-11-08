@@ -116,3 +116,29 @@ export async function updateBankDetails(req: AuthenticatedRequest, res: Response
   }
 }
 
+export async function updateQuotationSettings(req: AuthenticatedRequest, res: Response) {
+  try {
+    let settings = await CompanySettings.findOne();
+    if (!settings) settings = await CompanySettings.create({});
+
+    settings.quotationSettings = {
+      ...settings.quotationSettings,
+      ...req.body,
+    };
+    await settings.save();
+
+    await logAudit({
+      action: 'SETTINGS_QUOTATION_UPDATED',
+      entityType: 'Settings',
+      entityId: settings._id.toString(),
+      userId: req.user?.id,
+      userName: req.user?.name,
+    });
+
+    return sendSuccess(res, settings.quotationSettings, 'Quotation preferences updated');
+  } catch (error) {
+    return sendError(res, 'Failed to update quotation settings', 500, (error as Error).message);
+  }
+}
+
+

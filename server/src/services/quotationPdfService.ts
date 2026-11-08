@@ -36,50 +36,56 @@ export function formatINRValue(val: number): string {
   });
 }
 
-// Crisp Vector Icons for PDFKit (resolution-independent)
-function drawPinIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.fillColor('#64748B').circle(x + 3.5, y + 3.5, 3.2).fill();
-  doc.polygon([x + 0.8, y + 4.5], [x + 6.2, y + 4.5], [x + 3.5, y + 9]).fill();
-  doc.fillColor('#FFFFFF').circle(x + 3.5, y + 3.5, 1.2).fill();
-  doc.restore();
-}
+export function amountToWordsIndian(amount: number): string {
+  const a = [
+    '',
+    'One ',
+    'Two ',
+    'Three ',
+    'Four ',
+    'Five ',
+    'Six ',
+    'Seven ',
+    'Eight ',
+    'Nine ',
+    'Ten ',
+    'Eleven ',
+    'Twelve ',
+    'Thirteen ',
+    'Fourteen ',
+    'Fifteen ',
+    'Sixteen ',
+    'Seventeen ',
+    'Eighteen ',
+    'Nineteen ',
+  ];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
-function drawMailIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.strokeColor('#64748B').lineWidth(0.8).rect(x, y + 1.2, 9, 6.5).stroke();
-  doc.moveTo(x, y + 1.2).lineTo(x + 4.5, y + 4.8).lineTo(x + 9, y + 1.2).stroke();
-  doc.restore();
-}
+  const num = Math.floor(Math.abs(amount));
+  if (num === 0) return 'Zero Rupees Only';
 
-function drawPhoneIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.strokeColor('#64748B').lineWidth(0.8).rect(x + 1, y, 6.5, 9).stroke();
-  doc.moveTo(x + 2.5, y + 1.5).lineTo(x + 6, y + 1.5).stroke();
-  doc.circle(x + 4.25, y + 7.5, 0.6).fill('#64748B');
-  doc.restore();
-}
+  function convertNumber(n: number): string {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : ' ');
+    if (n < 1000)
+      return (
+        a[Math.floor(n / 100)] + 'Hundred ' + (n % 100 !== 0 ? convertNumber(n % 100) : '')
+      );
+    return '';
+  }
 
-function drawCardIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.strokeColor('#64748B').lineWidth(0.8).rect(x, y + 1, 9, 6.5).stroke();
-  doc.moveTo(x, y + 3).lineTo(x + 9, y + 3).stroke();
-  doc.restore();
-}
+  let words = '';
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const remainder = num % 1000;
 
-function drawUserIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.fillColor('#475569').circle(x + 4, y + 3.5, 2.4).fill();
-  doc.moveTo(x + 0.8, y + 9).bezierCurveTo(x + 0.8, y + 6.6, x + 7.2, y + 6.6, x + 7.2, y + 9).fill();
-  doc.restore();
-}
+  if (crore > 0) words += convertNumber(crore) + 'Crore ';
+  if (lakh > 0) words += convertNumber(lakh) + 'Lakh ';
+  if (thousand > 0) words += convertNumber(thousand) + 'Thousand ';
+  if (remainder > 0) words += convertNumber(remainder);
 
-function drawDocIcon(doc: any, x: number, y: number) {
-  doc.save();
-  doc.strokeColor('#475569').lineWidth(0.8).rect(x + 1, y, 6.8, 9).stroke();
-  doc.moveTo(x + 2.6, y + 3).lineTo(x + 6.2, y + 3).stroke();
-  doc.moveTo(x + 2.6, y + 5).lineTo(x + 6.2, y + 5).stroke();
-  doc.restore();
+  return words.trim() + ' Rupees Only';
 }
 
 export function generateQuotationPDF(
@@ -95,7 +101,7 @@ export function generateQuotationPDF(
         info: {
           Title: `Quotation ${quotation.quotationNumber}`,
           Author: 'Royal Engineering & Construction',
-          Subject: `Commercial Cost Estimate for ${quotation.projectName}`,
+          Subject: `Commercial Construction Work Quotation for ${quotation.projectName}`,
         },
       });
 
@@ -117,9 +123,10 @@ export function generateQuotationPDF(
       const FONT_REGULAR = hasCustomFonts ? 'AppFont' : 'Helvetica';
       const FONT_BOLD = hasCustomFonts ? 'AppFont-Bold' : 'Helvetica-Bold';
 
-      // Monochrome luxury colors
+      // Design System Palette (Luxury Monochrome)
       const COLOR_BLACK = '#0F172A';
       const COLOR_CHARCOAL = '#18181B';
+      const COLOR_BANNER_BG = '#111111';
       const COLOR_DARK_GRAY = '#334155';
       const COLOR_MUTED = '#64748B';
       const COLOR_BORDER = '#CBD5E1';
@@ -150,453 +157,748 @@ export function generateQuotationPDF(
       const email = profile?.email || snapshot?.email || 'royalengandconstruction@gmail.com';
       const gstin = profile?.gstin || snapshot?.gstin || '32GCDPP0980D1ZT';
 
-      // Terms
-      const termsSettingRaw =
-        quotation.termsAndConditions ||
-        settings?.quotationSettings?.termsAndConditions ||
-        '• Rates quoted are valid for 30 days from date of issue.\n• Taxes are estimated and applicable as per prevailing GST rules upon tax invoice generation.\n• Extra items or structural scope variations will be billed separately upon mutual consent.\n• Mobilization will commence upon formal acceptance & agreed advance.';
-
-      const termsList = termsSettingRaw
-        .split('\n')
-        .map((t) => t.trim().replace(/^[•\-\*]\s*/, ''))
-        .filter((t) => t.length > 0);
-
-      const signatoryCompany =
-        settings?.invoiceSettings?.signatoryCompany ||
-        (companySubtitle ? `For ${companyName} ${companySubtitle}` : `For ${companyName}`);
-
       const client = quotation.clientSnapshot;
       const logoPath = getAssetPath('logo.png');
       const hasLogo = fs.existsSync(logoPath);
 
-      const tableW = 523;
-      const rowH = 20;
-      const headerH = 22;
+      const tableW = 523; // Printable width (595 - 72)
+      const pageBottomLimit = 750;
 
       // ==========================================
-      // HELPER: DRAW PAGE 1 TOP HEADER & PARTICULARS
+      // SECTION A: DRAW FIRST PAGE TOP BANNER
       // ==========================================
       const drawFirstPageHeader = (): number => {
-        // Logo
+        // Dark Corporate Top Banner
+        const bannerH = 58;
+        doc
+          .save()
+          .roundedRect(36, 36, tableW, bannerH, 4)
+          .fill(COLOR_BANNER_BG);
+
+        // Logo inside a clean white badge
+        doc.roundedRect(44, 42, 46, 46, 4).fill(COLOR_WHITE);
         if (hasLogo) {
           try {
-            doc.image(logoPath, 36, 36, { width: 44, height: 44 });
+            doc.image(logoPath, 46, 44, { width: 42, height: 42 });
           } catch (e) {
-            console.warn('Failed to embed logo image', e);
+            console.warn('Failed to embed logo', e);
           }
         }
 
-        // Separator
-        doc.save().strokeColor(COLOR_BORDER).lineWidth(1).moveTo(88, 36).lineTo(88, 80).stroke().restore();
+        // Company Brand Name & Subtitle
+        doc
+          .font(FONT_BOLD)
+          .fontSize(16)
+          .fillColor(COLOR_WHITE)
+          .text(companyName, 98, 44, { characterSpacing: 1 });
+        doc
+          .font(FONT_BOLD)
+          .fontSize(7)
+          .fillColor('#CBD5E1')
+          .text(companySubtitle, 98, 63, { characterSpacing: 1.4 });
 
-        // Brand Typography
-        doc.font(FONT_BOLD).fontSize(19).fillColor(COLOR_BLACK).text(companyName, 96, 37, { characterSpacing: 1 });
-        doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(companySubtitle, 96, 58, { characterSpacing: 1.4 });
+        // Right Header: Address, Contacts & GSTIN
+        const rightTextW = 280;
+        const rightX = 36 + tableW - rightTextW - 12;
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor('#E2E8F0')
+          .text(`${address}, ${city}, ${state} - ${pincode}`, rightX, 43, {
+            width: rightTextW,
+            align: 'right',
+          });
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor('#E2E8F0')
+          .text(`Ph: ${phone}`, rightX, 53, {
+            width: rightTextW,
+            align: 'right',
+          });
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor('#CBD5E1')
+          .text(`${email}  |  GSTIN: ${gstin}`, rightX, 63, {
+            width: rightTextW,
+            align: 'right',
+          });
 
-        // Company Details
-        let cY = 86;
-        const lh = 12;
-
-        drawPinIcon(doc, 36, cY);
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(`${address}, ${city}, ${state} - ${pincode}`, 48, cY);
-
-        cY += lh;
-        drawMailIcon(doc, 36, cY);
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(email, 48, cY);
-
-        cY += lh;
-        drawPhoneIcon(doc, 36, cY);
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(phone, 48, cY);
-
-        if (gstin) {
-          cY += lh;
-          drawCardIcon(doc, 36, cY);
-          doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('GSTIN: ', 48, cY, { continued: true });
-          doc.font(FONT_REGULAR).text(gstin);
-        }
-
-        // Right Header: Quotation Title & Sub-Banner
-        const rightX = 350;
-        doc.font(FONT_BOLD).fontSize(22).fillColor(COLOR_BLACK).text('QUOTATION', rightX, 36, { align: 'right', width: 209 });
-
-        // Pill Sub-Banner: "QUOTATION — NOT A TAX INVOICE"
-        doc.roundedRect(365, 62, 194, 15, 3).fillAndStroke(COLOR_LIGHT_BG, '#CBD5E1');
-        doc.font(FONT_BOLD).fontSize(7).fillColor(COLOR_DARK_GRAY).text('QUOTATION — NOT A TAX INVOICE', 365, 66, { align: 'center', width: 194, characterSpacing: 0.8 });
-
-        // Metadata Table Right
-        const metaY = 84;
-        const metaRows = [
-          { label: 'Quotation No', value: quotation.quotationNumber, isBold: true },
-          {
-            label: 'Quotation Date',
-            value: new Date(quotation.quotationDate).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            }),
-          },
-          {
-            label: 'Valid Until',
-            value: new Date(quotation.validUntil).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            }),
-            isBold: true,
-          },
-          { label: 'Status', value: quotation.status.toUpperCase(), isBadge: true },
-        ];
-
-        let curMY = metaY;
-        metaRows.forEach((r) => {
-          doc.font(FONT_REGULAR).fontSize(8).fillColor(COLOR_DARK_GRAY).text(r.label, 370, curMY);
-          doc.text(':', 445, curMY);
-
-          if (r.isBadge) {
-            const badgeW = doc.widthOfString(r.value) + 12;
-            doc.roundedRect(455, curMY - 1, badgeW, 12, 3).fillAndStroke(COLOR_LIGHT_BG, '#CBD5E1');
-            doc.font(FONT_BOLD).fontSize(6.8).fillColor(COLOR_BLACK).text(r.value, 455, curMY + 1.5, { width: badgeW, align: 'center' });
-          } else {
-            doc.font(r.isBold ? FONT_BOLD : FONT_REGULAR).fontSize(8).fillColor(COLOR_BLACK).text(r.value, 455, curMY);
-          }
-          curMY += 13.5;
-        });
-
-        // Top Header Divider
-        const headerBottomY = Math.max(cY, curMY) + 8;
-        doc.save().strokeColor(COLOR_BORDER).lineWidth(0.8).moveTo(36, headerBottomY).lineTo(559, headerBottomY).stroke().restore();
-
-        // Client & Project Estimate Cards
-        const cardsY = headerBottomY + 8;
-        const cardW = 255;
-        const cardH = 84;
-
-        // Left Card: Client Details
-        doc.roundedRect(36, cardsY, cardW, cardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.roundedRect(36, cardsY, cardW, 19, 5).fill(COLOR_LIGHT_BG);
-        doc.rect(36, cardsY + 13, cardW, 6).fill(COLOR_LIGHT_BG);
-        doc.moveTo(36, cardsY + 19).lineTo(36 + cardW, cardsY + 19).strokeColor(COLOR_BORDER).stroke();
-
-        drawUserIcon(doc, 44, cardsY + 5);
-        doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('QUOTATION ISSUED TO', 56, cardsY + 5.5);
-
-        let clientY = cardsY + 24;
-        doc.font(FONT_BOLD).fontSize(9).fillColor(COLOR_BLACK).text(client.clientName, 44, clientY, { width: cardW - 20, ellipsis: true });
-        clientY += 12;
-
-        if (client.contactPerson) {
-          doc.font(FONT_REGULAR).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text(`Attn: ${client.contactPerson}`, 44, clientY);
-          clientY += 10;
-        }
-
-        const clientFullAddr = `${client.billingAddress}, ${client.city}, ${client.state} - ${client.pincode}`;
-        doc.font(FONT_REGULAR).fontSize(7).fillColor(COLOR_MUTED).text(clientFullAddr, 44, clientY, { width: cardW - 20, height: 18, ellipsis: true });
-        clientY += 17;
-
-        let contactLine = `Ph: ${client.phone}`;
-        if (client.gstin) contactLine += `  |  GSTIN: ${client.gstin}`;
-        doc.font(FONT_REGULAR).fontSize(7).fillColor(COLOR_DARK_GRAY).text(contactLine, 44, clientY, { width: cardW - 20, ellipsis: true });
-
-        // Right Card: Project Scope & Particulars
-        const rightCardX = 304;
-        doc.roundedRect(rightCardX, cardsY, cardW, cardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.roundedRect(rightCardX, cardsY, cardW, 19, 5).fill(COLOR_LIGHT_BG);
-        doc.rect(rightCardX, cardsY + 13, cardW, 6).fill(COLOR_LIGHT_BG);
-        doc.moveTo(rightCardX, cardsY + 19).lineTo(rightCardX + cardW, cardsY + 19).strokeColor(COLOR_BORDER).stroke();
-
-        drawDocIcon(doc, rightCardX + 8, cardsY + 5);
-        doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('PROJECT & ESTIMATE PARTICULARS', rightCardX + 20, cardsY + 5.5);
-
-        let projY = cardsY + 24;
-        doc.font(FONT_BOLD).fontSize(8.5).fillColor(COLOR_BLACK).text(quotation.projectName, rightCardX + 8, projY, { width: cardW - 16, ellipsis: true });
-        projY += 12;
-
-        if (quotation.projectLocation) {
-          doc.font(FONT_REGULAR).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text(`Location: ${quotation.projectLocation}`, rightCardX + 8, projY, { width: cardW - 16, ellipsis: true });
-          projY += 10;
-        }
-
-        if (quotation.projectDescription) {
-          doc.font(FONT_REGULAR).fontSize(7).fillColor(COLOR_MUTED).text(quotation.projectDescription, rightCardX + 8, projY, { width: cardW - 16, height: 18, ellipsis: true });
-          projY += 17;
-        }
-
-        doc.font(FONT_REGULAR).fontSize(7).fillColor(COLOR_DARK_GRAY).text(`Payment: ${quotation.paymentTerms || 'As per stage milestones'}`, rightCardX + 8, projY, { width: cardW - 16, ellipsis: true });
-
-        return cardsY + cardH + 10;
-      };
-
-      // ==========================================
-      // HELPER: DRAW SUBSEQUENT PAGE HEADER
-      // ==========================================
-      const drawContinuationHeader = (pageNumber: number): number => {
-        if (hasLogo) {
-          try {
-            doc.image(logoPath, 36, 36, { width: 28, height: 28 });
-          } catch (e) {
-            console.warn('Continuation logo error', e);
-          }
-        }
-
-        doc.font(FONT_BOLD).fontSize(11).fillColor(COLOR_BLACK).text(`${companyName} ${companySubtitle}`, 72, 36);
-        doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(
-          `Quotation No: ${quotation.quotationNumber}  •  Project: ${quotation.projectName}  (Continued)`,
-          72,
-          50
-        );
-
-        // Sub-Banner Pill
-        doc.roundedRect(390, 36, 169, 14, 3).fillAndStroke(COLOR_LIGHT_BG, '#CBD5E1');
-        doc.font(FONT_BOLD).fontSize(6.8).fillColor(COLOR_DARK_GRAY).text('QUOTATION — NOT A TAX INVOICE', 390, 39.5, {
-          align: 'center',
-          width: 169,
-        });
-
-        const dividerY = 68;
-        doc.save().strokeColor(COLOR_BORDER).lineWidth(0.8).moveTo(36, dividerY).lineTo(559, dividerY).stroke().restore();
-
-        return dividerY + 10;
-      };
-
-      // ==========================================
-      // HELPER: DRAW TABLE HEADER BAR
-      // ==========================================
-      const drawTableHeader = (y: number): number => {
-        doc.rect(36, y, tableW, headerH).fill(COLOR_CHARCOAL);
-
-        doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_WHITE);
-        doc.text('#', 38, y + 6.5, { width: 24, align: 'center' });
-        doc.text('DESCRIPTION OF WORK / ESTIMATE ITEMS', 66, y + 6.5, { width: 236 });
-        doc.text('QTY', 308, y + 6.5, { width: 42, align: 'center' });
-        doc.text('UNIT', 354, y + 6.5, { width: 44, align: 'center' });
-        doc.text('RATE (₹)', 402, y + 6.5, { width: 75, align: 'right' });
-        doc.text('AMOUNT (₹)', 480, y + 6.5, { width: 75, align: 'right' });
-
-        return y + headerH;
-      };
-
-      // ==========================================
-      // HELPER: DRAW SINGLE TABLE ROW
-      // ==========================================
-      const drawTableRow = (item: any, index: number, y: number): number => {
-        const isZebra = index % 2 === 1;
-        const rowBg = isZebra ? COLOR_LIGHT_BG : COLOR_WHITE;
-
-        doc.rect(36, y, tableW, rowH).fill(rowBg);
-
-        // Thin bottom border
-        doc.moveTo(36, y + rowH).lineTo(36 + tableW, y + rowH).strokeColor(COLOR_BORDER).lineWidth(0.5).stroke();
-
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY);
-        doc.text(String(index + 1), 38, y + 5.5, { width: 24, align: 'center' });
-
-        doc.fillColor(COLOR_BLACK);
-        doc.text(item.description, 66, y + 5.5, { width: 236, ellipsis: true });
-
-        doc.fillColor(COLOR_DARK_GRAY);
-        doc.text(String(item.quantity), 308, y + 5.5, { width: 42, align: 'center' });
-        doc.text(item.unit || 'Job', 354, y + 5.5, { width: 44, align: 'center' });
-
-        doc.fillColor(COLOR_BLACK);
-        doc.text(formatINRValue(item.rate), 402, y + 5.5, { width: 75, align: 'right' });
-
-        doc.font(FONT_BOLD).fillColor(COLOR_BLACK);
-        doc.text(formatINRValue(item.amount), 480, y + 5.5, { width: 75, align: 'right' });
-
-        return y + rowH;
-      };
-
-      // ==========================================
-      // HELPER: DRAW SUMMARY, TERMS, SIGNATURES & DISCLAIMER
-      // ==========================================
-      const drawBottomSections = (startY: number) => {
-        const cardW = 255;
-        const summaryCardH = 106;
-
-        // --- Left: Quotation Terms & Conditions ---
-        doc.roundedRect(36, startY, cardW, summaryCardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.roundedRect(36, startY, cardW, 19, 5).fill(COLOR_LIGHT_BG);
-        doc.rect(36, startY + 13, cardW, 6).fill(COLOR_LIGHT_BG);
-        doc.moveTo(36, startY + 19).lineTo(36 + cardW, startY + 19).strokeColor(COLOR_BORDER).stroke();
-
-        drawDocIcon(doc, 44, startY + 5);
-        doc.font(FONT_BOLD).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text('QUOTATION TERMS & CONDITIONS', 56, startY + 5.5);
-
-        let tY = startY + 24;
-        termsList.slice(0, 4).forEach((term) => {
-          doc.font(FONT_REGULAR).fontSize(6.7).fillColor(COLOR_DARK_GRAY).text(`•  ${term}`, 44, tY, { width: cardW - 16 });
-          tY += 12;
-        });
-
-        // --- Right: Financial Estimate Summary ---
-        const rightSummaryX = 304;
-        doc.roundedRect(rightSummaryX, startY, cardW, summaryCardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.roundedRect(rightSummaryX, startY, cardW, 19, 5).fill(COLOR_LIGHT_BG);
-        doc.rect(rightSummaryX, startY + 13, cardW, 6).fill(COLOR_LIGHT_BG);
-        doc.moveTo(rightSummaryX, startY + 19).lineTo(rightSummaryX + cardW, startY + 19).strokeColor(COLOR_BORDER).stroke();
-
-        drawCardIcon(doc, rightSummaryX + 8, startY + 5);
-        doc.font(FONT_BOLD).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text('FINANCIAL ESTIMATE SUMMARY', rightSummaryX + 22, startY + 5.5);
-
-        let sY = startY + 24;
-        const lineH = 12.5;
-
-        // Subtotal
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('Subtotal', rightSummaryX + 10, sY);
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_BLACK).text(formatINR(quotation.subtotal), rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-        sY += lineH;
-
-        // Discount (if any)
-        if (quotation.discount && quotation.discount.amount > 0) {
-          doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('Discount', rightSummaryX + 10, sY);
-          doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_BLACK).text(`- ${formatINR(quotation.discount.amount)}`, rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-          sY += lineH;
-        }
-
-        // Estimated Taxable Value
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('Estimated Taxable Value', rightSummaryX + 10, sY);
-        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_BLACK).text(formatINR(quotation.taxableAmount), rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-        sY += lineH;
-
-        // Indicative Taxes
-        const gst = quotation.estimatedGstDetails;
-        if (gst && gst.isApplicable && gst.totalTax > 0) {
-          if (gst.supplyType === 'Inter-State') {
-            doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(`Indicative IGST (${gst.rate}%)`, rightSummaryX + 10, sY);
-            doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_BLACK).text(formatINR(gst.igstAmount), rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-            sY += lineH;
-          } else {
-            doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(`Indicative GST (${gst.rate}%)`, rightSummaryX + 10, sY);
-            doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_BLACK).text(formatINR(gst.totalTax), rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-            sY += lineH;
-          }
-        }
-
-        // Grand Total Solid Black Bar
-        const grandTotalBarH = 22;
-        doc.roundedRect(rightSummaryX + 6, sY, cardW - 12, grandTotalBarH, 4).fill(COLOR_CHARCOAL);
-
-        doc.font(FONT_BOLD).fontSize(8).fillColor(COLOR_WHITE).text('ESTIMATED GRAND TOTAL', rightSummaryX + 12, sY + 6.5);
-        doc.font(FONT_BOLD).fontSize(10).fillColor(COLOR_WHITE).text(formatINR(quotation.estimatedGrandTotal), rightSummaryX + 10, sY + 5.5, { width: cardW - 24, align: 'right' });
-        sY += grandTotalBarH + 3;
-
-        doc.font(FONT_REGULAR).fontSize(6.2).fillColor(COLOR_MUTED).text('* Final tax liability confirmed upon formal Tax Invoice.', rightSummaryX + 10, sY, { width: cardW - 20, align: 'right' });
-
-        // --- Dual Signatures Section ---
-        const sigY = startY + summaryCardH + 8;
-        const sigCardH = 64;
-
-        // Left: Client Acceptance & Endorsement
-        doc.roundedRect(36, sigY, cardW, sigCardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.font(FONT_BOLD).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text('CLIENT ACCEPTANCE & ENDORSEMENT', 44, sigY + 8);
-        doc.font(FONT_REGULAR).fontSize(6.8).fillColor(COLOR_MUTED).text('I/We hereby accept the rates, terms & scope specified above.', 44, sigY + 19);
-
-        doc.moveTo(44, sigY + 46).lineTo(44 + 125, sigY + 46).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.font(FONT_REGULAR).fontSize(6.5).fillColor(COLOR_DARK_GRAY).text('Client Signature & Seal', 44, sigY + 49);
-
-        doc.moveTo(182, sigY + 46).lineTo(182 + 95, sigY + 46).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.font(FONT_REGULAR).fontSize(6.5).fillColor(COLOR_DARK_GRAY).text('Date of Acceptance', 182, sigY + 49);
-
-        // Right: Company Signatory Block
-        doc.roundedRect(rightSummaryX, sigY, cardW, sigCardH, 5).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.font(FONT_REGULAR).fontSize(7.2).fillColor(COLOR_DARK_GRAY).text(signatoryCompany, rightSummaryX, sigY + 8, { align: 'center', width: cardW });
-
-        // Flowing executive signature
-        doc.save().strokeColor(COLOR_BLACK).lineWidth(1.2).lineCap('round').lineJoin('round');
-        const sx = rightSummaryX + 85;
-        const sy = sigY + 33;
-        doc.moveTo(sx, sy)
-          .bezierCurveTo(sx + 4, sy - 10, sx + 10, sy - 12, sx + 14, sy - 2)
-          .bezierCurveTo(sx + 18, sy + 5, sx + 13, sy + 7, sx + 20, sy + 2)
-          .bezierCurveTo(sx + 26, sy - 9, sx + 35, sy - 7, sx + 40, sy + 2)
-          .bezierCurveTo(sx + 45, sy + 6, sx + 52, sy - 5, sx + 60, sy + 2)
-          .bezierCurveTo(sx + 65, sy + 5, sx + 74, sy + 3, sx + 80, sy + 4)
-          .stroke();
         doc.restore();
 
-        doc.moveTo(rightSummaryX + 30, sigY + 46).lineTo(rightSummaryX + cardW - 30, sigY + 46).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-        doc.font(FONT_BOLD).fontSize(6.8).fillColor(COLOR_BLACK).text('Authorized Signatory', rightSummaryX, sigY + 49, { align: 'center', width: cardW });
+        // ==========================================
+        // SECTION B & C: QUOTATION TITLE + CUSTOMER DETAILS
+        // (Inspired directly by client reference document)
+        // ==========================================
+        const metaY = 104;
 
-        // --- Bottom Legal Disclaimer ---
-        const disclaimerY = sigY + sigCardH + 7;
-        doc.font(FONT_REGULAR).fontSize(6.3).fillColor(COLOR_MUTED).text(
-          'This document is a formal commercial cost quotation and does not constitute a Tax Invoice under Section 31 of CGST Act. An official Tax Invoice will be issued upon client approval and project milestones.',
-          36,
-          disclaimerY,
-          { width: tableW, align: 'center' }
-        );
+        // Left Side: Prominent Quotation Title & Reference Meta
+        doc
+          .font(FONT_BOLD)
+          .fontSize(22)
+          .fillColor(COLOR_BLACK)
+          .text('Quotation', 36, metaY, { characterSpacing: 0.5 });
+
+        // Pill Sub-Banner: "QUOTATION — NOT A TAX INVOICE"
+        doc
+          .save()
+          .roundedRect(36, metaY + 26, 184, 14, 3)
+          .fillAndStroke(COLOR_LIGHT_BG, '#CBD5E1');
+        doc
+          .font(FONT_BOLD)
+          .fontSize(6.5)
+          .fillColor(COLOR_DARK_GRAY)
+          .text('COMMERCIAL PROPOSAL — NOT A TAX INVOICE', 36, metaY + 30, {
+            align: 'center',
+            width: 184,
+            characterSpacing: 0.5,
+          });
+        doc.restore();
+
+        // Quotation Number & Dates
+        const dateFormatted = new Date(quotation.quotationDate).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+        const validUntilFormatted = new Date(quotation.validUntil).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+
+        let curQY = metaY + 46;
+        doc.font(FONT_BOLD).fontSize(9.5).fillColor(COLOR_BLACK).text('No: ', 36, curQY, { continued: true });
+        doc.font(FONT_BOLD).text(quotation.quotationNumber);
+
+        curQY += 13;
+        doc.font(FONT_REGULAR).fontSize(8).fillColor(COLOR_DARK_GRAY).text('Date: ', 36, curQY, { continued: true });
+        doc.font(FONT_BOLD).text(dateFormatted);
+
+        curQY += 12;
+        doc.font(FONT_REGULAR).fontSize(8).fillColor(COLOR_MUTED).text('Valid Until: ', 36, curQY, { continued: true });
+        doc.font(FONT_BOLD).fillColor(COLOR_BLACK).text(validUntilFormatted);
+
+        // Right Side: Customer Details (Client Reference format: "Costumer details")
+        const custBoxX = 270;
+        const custBoxW = tableW - (custBoxX - 36);
+        const custBoxH = 80;
+
+        doc
+          .save()
+          .roundedRect(custBoxX, metaY, custBoxW, custBoxH, 4)
+          .fillAndStroke(COLOR_LIGHT_BG, '#E2E8F0');
+        doc.restore();
+
+        doc
+          .font(FONT_BOLD)
+          .fontSize(7.5)
+          .fillColor(COLOR_MUTED)
+          .text('CUSTOMER DETAILS', custBoxX + 10, metaY + 8, {
+            characterSpacing: 0.8,
+          });
+
+        doc
+          .font(FONT_BOLD)
+          .fontSize(9.5)
+          .fillColor(COLOR_BLACK)
+          .text(client.clientName.toUpperCase(), custBoxX + 10, metaY + 20, {
+            width: custBoxW - 20,
+          });
+
+        let custLineY = metaY + 33;
+        if (client.contactPerson) {
+          doc
+            .font(FONT_REGULAR)
+            .fontSize(7.5)
+            .fillColor(COLOR_DARK_GRAY)
+            .text(`Attn: ${client.contactPerson}`, custBoxX + 10, custLineY);
+          custLineY += 10;
+        }
+
+        const fullAddr = `${client.billingAddress}, ${client.city}, ${client.state} - ${client.pincode}`;
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor(COLOR_MUTED)
+          .text(fullAddr, custBoxX + 10, custLineY, {
+            width: custBoxW - 20,
+            lineGap: 1,
+          });
+
+        const phoneGstin = `Ph: ${client.phone}  |  GSTIN: ${client.gstin || 'Unregistered'}`;
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor(COLOR_DARK_GRAY)
+          .text(phoneGstin, custBoxX + 10, metaY + custBoxH - 14, {
+            width: custBoxW - 20,
+          });
+
+        // ==========================================
+        // SECTION D: PROJECT DETAILS STRIP
+        // ==========================================
+        const projY = metaY + custBoxH + 8;
+        const projH = 26;
+
+        doc
+          .save()
+          .roundedRect(36, projY, tableW, projH, 3)
+          .fillAndStroke('#F1F5F9', '#CBD5E1');
+        doc.restore();
+
+        // Project Name
+        doc
+          .font(FONT_BOLD)
+          .fontSize(8)
+          .fillColor(COLOR_BLACK)
+          .text('Project: ', 44, projY + 8, { continued: true });
+        doc.font(FONT_REGULAR).text(quotation.projectName, { continued: true });
+
+        // Project Location
+        if (quotation.projectLocation) {
+          doc.font(FONT_BOLD).text('   |   Location: ', { continued: true });
+          doc.font(FONT_REGULAR).text(quotation.projectLocation, { continued: true });
+        }
+
+        // Work Category / Scope
+        const scopeDesc = quotation.workCategory || quotation.projectDescription;
+        if (scopeDesc) {
+          doc.font(FONT_BOLD).text('   |   Scope: ', { continued: true });
+          doc.font(FONT_REGULAR).text(
+            scopeDesc.length > 50 ? scopeDesc.slice(0, 47) + '...' : scopeDesc
+          );
+        }
+
+        return projY + projH + 12; // Start Y for work table
+      };
+
+      // Continuation Header for Subsequent Pages
+      const drawContinuationHeader = (): number => {
+        doc.save().roundedRect(36, 36, tableW, 26, 3).fill(COLOR_BANNER_BG);
+
+        doc
+          .font(FONT_BOLD)
+          .fontSize(9)
+          .fillColor(COLOR_WHITE)
+          .text(
+            `${companyName} ${companySubtitle} — Quotation ${quotation.quotationNumber} (Continued)`,
+            46,
+            44
+          );
+
+        const dateStr = new Date(quotation.quotationDate).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(8)
+          .fillColor('#CBD5E1')
+          .text(`Date: ${dateStr}`, tableW - 80, 44, { align: 'right' });
+
+        doc.restore();
+        return 72; // Start Y after continuation header
       };
 
       // ==========================================
-      // EXECUTION: PAGINATION & RENDERING ENGINE
+      // SECTION E: DETAILED WORK DESCRIPTION TABLE
+      // (Inspired directly by client reference: SL | Area | Description | Amount)
       // ==========================================
-      const bottomSectionsHeight = 106 + 8 + 64 + 7 + 14; // ~199 pt
-      const pageBottomLimit = 780; // leaves clean margin for bottom footer/page numbers
+      const colW_SL = 28;
+      const colW_Area = 125;
+      const colW_Desc = 276;
+      const colW_Amount = 94;
+
+      const colX_SL = 36;
+      const colX_Area = colX_SL + colW_SL; // 64
+      const colX_Desc = colX_Area + colW_Area; // 189
+      const colX_Amount = colX_Desc + colW_Desc; // 465
+
+      const drawTableHeader = (startY: number): number => {
+        const hH = 20;
+        doc.save().roundedRect(36, startY, tableW, hH, 2).fill(COLOR_CHARCOAL);
+
+        doc.font(FONT_BOLD).fontSize(8).fillColor(COLOR_WHITE);
+        doc.text('SL', colX_SL, startY + 6, { width: colW_SL, align: 'center' });
+        doc.text('Area / Work', colX_Area + 6, startY + 6, { width: colW_Area - 10 });
+        doc.text('Description of Work / Scope', colX_Desc + 6, startY + 6, { width: colW_Desc - 10 });
+        doc.text('Amount (₹)', colX_Amount - 6, startY + 6, {
+          width: colW_Amount,
+          align: 'right',
+        });
+
+        doc.restore();
+        return startY + hH + 4;
+      };
 
       let currentY = drawFirstPageHeader();
       currentY = drawTableHeader(currentY);
 
-      let curPage = 1;
+      // Render Work Items with dynamic heights and borders
+      quotation.items.forEach((item, idx) => {
+        const areaText = (item as any).area || (item.description.includes('-') ? item.description.split('-')[0].trim() : 'Construction Work');
+        const descText = item.description;
 
-      for (let i = 0; i < quotation.items.length; i++) {
-        const item = quotation.items[i];
-        const isLastItem = i === quotation.items.length - 1;
+        // If quantity/rate exist and are significant, add a neat subtitle
+        let fullDesc = descText;
+        if (item.quantity > 1 || item.rate > 0) {
+          const qtyRateNote = `[Quantity: ${item.quantity} ${item.unit} @ ₹${formatINRValue(item.rate)} / ${item.unit}]`;
+          if (!descText.includes(qtyRateNote)) {
+            fullDesc += `\n${qtyRateNote}`;
+          }
+        }
 
-        if (!isLastItem) {
-          if (currentY + rowH > pageBottomLimit) {
-            // Close table on current page
-            doc.moveTo(36, currentY).lineTo(36 + tableW, currentY).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-            // Add page
-            doc.addPage();
-            curPage++;
-            currentY = drawContinuationHeader(curPage);
-            currentY = drawTableHeader(currentY);
-          }
-          currentY = drawTableRow(item, i, currentY);
-        } else {
-          // Last item: check whether table row AND bottom sections fit on this page
-          if (currentY + rowH + bottomSectionsHeight <= pageBottomLimit) {
-            currentY = drawTableRow(item, i, currentY);
-            doc.moveTo(36, currentY).lineTo(36 + tableW, currentY).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-            drawBottomSections(currentY + 10);
-          } else {
-            // Bottom sections do not fit
-            if (currentY + rowH <= pageBottomLimit) {
-              currentY = drawTableRow(item, i, currentY);
-              doc.moveTo(36, currentY).lineTo(36 + tableW, currentY).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-              // Page break for summary + signatures
-              doc.addPage();
-              curPage++;
-              currentY = drawContinuationHeader(curPage);
-              drawBottomSections(currentY + 8);
-            } else {
-              // Even the row doesn't fit on current page
-              doc.moveTo(36, currentY).lineTo(36 + tableW, currentY).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-              doc.addPage();
-              curPage++;
-              currentY = drawContinuationHeader(curPage);
-              currentY = drawTableHeader(currentY);
-              currentY = drawTableRow(item, i, currentY);
-              doc.moveTo(36, currentY).lineTo(36 + tableW, currentY).strokeColor(COLOR_BORDER).lineWidth(0.8).stroke();
-              drawBottomSections(currentY + 10);
-            }
-          }
+        // Calculate text heights
+        doc.font(FONT_BOLD).fontSize(8);
+        const areaH = doc.heightOfString(areaText, {
+          width: colW_Area - 12,
+        });
+
+        doc.font(FONT_REGULAR).fontSize(7.5);
+        const descH = doc.heightOfString(fullDesc, {
+          width: colW_Desc - 14,
+          lineGap: 2,
+        });
+
+        const rowH = Math.max(areaH, descH, 22) + 12;
+
+        // Check if page break is needed
+        if (currentY + rowH > pageBottomLimit) {
+          doc.addPage();
+          currentY = drawContinuationHeader();
+          currentY = drawTableHeader(currentY);
+        }
+
+        // Draw Row Border Box (inspired by client reference)
+        doc
+          .save()
+          .rect(36, currentY, tableW, rowH)
+          .strokeColor(COLOR_BORDER)
+          .lineWidth(0.75)
+          .stroke();
+
+        // Draw column divider lines
+        doc
+          .moveTo(colX_Area, currentY)
+          .lineTo(colX_Area, currentY + rowH)
+          .stroke();
+        doc
+          .moveTo(colX_Desc, currentY)
+          .lineTo(colX_Desc, currentY + rowH)
+          .stroke();
+        doc
+          .moveTo(colX_Amount, currentY)
+          .lineTo(colX_Amount, currentY + rowH)
+          .stroke();
+
+        // 1. SL Number
+        doc
+          .font(FONT_BOLD)
+          .fontSize(8)
+          .fillColor(COLOR_BLACK)
+          .text(String(idx + 1), colX_SL, currentY + 6, {
+            width: colW_SL,
+            align: 'center',
+          });
+
+        // 2. Area (in bold / prominent font as per client reference)
+        doc
+          .font(FONT_BOLD)
+          .fontSize(8)
+          .fillColor(COLOR_BLACK)
+          .text(areaText, colX_Area + 6, currentY + 6, {
+            width: colW_Area - 12,
+            lineGap: 1.5,
+          });
+
+        // 3. Description of Work (with bullet indentation if lines start with -)
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7.5)
+          .fillColor(COLOR_DARK_GRAY)
+          .text(fullDesc, colX_Desc + 6, currentY + 6, {
+            width: colW_Desc - 14,
+            lineGap: 2,
+          });
+
+        // 4. Amount
+        doc
+          .font(FONT_BOLD)
+          .fontSize(8.5)
+          .fillColor(COLOR_BLACK)
+          .text(formatINR(item.amount), colX_Amount - 6, currentY + 6, {
+            width: colW_Amount,
+            align: 'right',
+          });
+
+        doc.restore();
+
+        currentY += rowH + 2;
+      });
+
+      // ==========================================
+      // SECTION F: REMARKS & DECLARATION
+      // (Directly modeled after the client's reference box)
+      // ==========================================
+      currentY += 4;
+
+      const defaultRemarks =
+        quotation.remarks ||
+        quotation.notes ||
+        "All works shall comply with the manufacturer's recommendations and warranty requirements. Site inspections by the manufacturer's technical team shall be arranged as required to ensure warranty compliance.";
+
+      const defaultDeclaration =
+        quotation.declaration ||
+        `We hereby declare that the total estimated quotation amount of ${formatINR(
+          quotation.estimatedGrandTotal
+        )} includes all materials, labour, tools, and accessories required to complete the work to the highest standards, ensuring quality and meeting your expectations.`;
+
+      let remarksBlockText = `Remark: ${defaultRemarks}`;
+
+      if (quotation.materialInclusions) {
+        remarksBlockText += `\nMaterial Inclusions: ${quotation.materialInclusions}`;
+      }
+      if (quotation.labourInclusions) {
+        remarksBlockText += `\nLabour Inclusions: ${quotation.labourInclusions}`;
+      }
+      if (quotation.exclusions) {
+        remarksBlockText += `\nExclusions: ${quotation.exclusions}`;
+      }
+
+      remarksBlockText += `\nDeclaration: ${defaultDeclaration}`;
+
+      doc.font(FONT_REGULAR).fontSize(7.5);
+      const remarksBoxH =
+        doc.heightOfString(remarksBlockText, {
+          width: tableW - 20,
+          lineGap: 2.5,
+        }) + 16;
+
+      if (currentY + remarksBoxH > pageBottomLimit) {
+        doc.addPage();
+        currentY = drawContinuationHeader();
+      }
+
+      // Draw Remark & Declaration Box
+      doc
+        .save()
+        .roundedRect(36, currentY, tableW, remarksBoxH, 3)
+        .fillAndStroke(COLOR_LIGHT_BG, COLOR_BORDER);
+      doc.restore();
+
+      let boxTextY = currentY + 8;
+
+      // Remark Line
+      doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('Remark: ', 46, boxTextY, { continued: true });
+      doc
+        .font(FONT_REGULAR)
+        .fillColor(COLOR_DARK_GRAY)
+        .text(defaultRemarks, {
+          width: tableW - 20,
+          lineGap: 2,
+        });
+
+      boxTextY = doc.y + 4;
+
+      // Inclusions / Exclusions if present
+      if (quotation.materialInclusions || quotation.labourInclusions || quotation.exclusions) {
+        if (quotation.materialInclusions) {
+          doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('Material Inclusions: ', 46, boxTextY, { continued: true });
+          doc.font(FONT_REGULAR).fillColor(COLOR_DARK_GRAY).text(quotation.materialInclusions, { width: tableW - 20 });
+          boxTextY = doc.y + 3;
+        }
+        if (quotation.labourInclusions) {
+          doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('Labour Inclusions: ', 46, boxTextY, { continued: true });
+          doc.font(FONT_REGULAR).fillColor(COLOR_DARK_GRAY).text(quotation.labourInclusions, { width: tableW - 20 });
+          boxTextY = doc.y + 3;
+        }
+        if (quotation.exclusions) {
+          doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('Exclusions: ', 46, boxTextY, { continued: true });
+          doc.font(FONT_REGULAR).fillColor(COLOR_DARK_GRAY).text(quotation.exclusions, { width: tableW - 20 });
+          boxTextY = doc.y + 3;
         }
       }
 
+      // Declaration Line
+      doc.font(FONT_BOLD).fontSize(7.5).fillColor(COLOR_BLACK).text('Declaration: ', 46, boxTextY, { continued: true });
+      doc
+        .font(FONT_REGULAR)
+        .fillColor(COLOR_DARK_GRAY)
+        .text(defaultDeclaration, {
+          width: tableW - 20,
+          lineGap: 2,
+        });
+
+      currentY += remarksBoxH + 8;
+
       // ==========================================
-      // WRITE PAGE NUMBERS ON ALL BUFFERED PAGES
+      // SECTION G & H: COMMERCIAL FINANCIAL SUMMARY & PAYMENT TERMS
+      // (Commercial style, NOT a Tax Invoice)
+      // ==========================================
+      const summaryBlockH = 92;
+
+      if (currentY + summaryBlockH > pageBottomLimit) {
+        doc.addPage();
+        currentY = drawContinuationHeader();
+      }
+
+      const sumLeftW = 265;
+      const sumRightW = tableW - sumLeftW - 10;
+      const sumRightX = 36 + sumLeftW + 10;
+
+      // Left: Payment Milestones & Validity
+      doc
+        .save()
+        .roundedRect(36, currentY, sumLeftW, summaryBlockH, 3)
+        .fillAndStroke(COLOR_LIGHT_BG, '#E2E8F0');
+      doc.restore();
+
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7.5)
+        .fillColor(COLOR_MUTED)
+        .text('PAYMENT TERMS & SCHEDULE', 44, currentY + 8, { characterSpacing: 0.8 });
+
+      const termsText =
+        quotation.paymentSchedule ||
+        quotation.paymentTerms ||
+        'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%';
+
+      doc
+        .font(FONT_REGULAR)
+        .fontSize(7.5)
+        .fillColor(COLOR_DARK_GRAY)
+        .text(`• ${termsText.replace(/\|/g, '\n• ')}`, 44, currentY + 22, {
+          width: sumLeftW - 16,
+          lineGap: 3,
+        });
+
+      const validDateStr = new Date(quotation.validUntil).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7)
+        .fillColor(COLOR_MUTED)
+        .text(`• Commercial validity: ${validDateStr}`, 44, currentY + summaryBlockH - 14);
+
+      // Right: Commercial Financial Summary
+      doc
+        .save()
+        .roundedRect(sumRightX, currentY, sumRightW, summaryBlockH, 3)
+        .strokeColor(COLOR_BORDER)
+        .stroke();
+      doc.restore();
+
+      let fY = currentY + 8;
+
+      // Subtotal
+      doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('Subtotal', sumRightX + 10, fY);
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7.5)
+        .fillColor(COLOR_BLACK)
+        .text(formatINR(quotation.subtotal), sumRightX + sumRightW - 100, fY, {
+          width: 90,
+          align: 'right',
+        });
+
+      // Discount if any
+      if (quotation.discount && quotation.discount.amount > 0) {
+        fY += 12;
+        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text('Discount', sumRightX + 10, fY);
+        doc
+          .font(FONT_BOLD)
+          .fontSize(7.5)
+          .fillColor('#E11D48')
+          .text(`- ${formatINR(quotation.discount.amount)}`, sumRightX + sumRightW - 100, fY, {
+            width: 90,
+            align: 'right',
+          });
+      }
+
+      // Estimated GST if applicable
+      if (quotation.estimatedGstDetails?.isApplicable && quotation.estimatedGstDetails.totalTax > 0) {
+        fY += 12;
+        const gstLabel =
+          quotation.estimatedGstDetails.supplyType === 'Inter-State'
+            ? `Indicative IGST (${quotation.estimatedGstDetails.rate}%)`
+            : `Indicative GST (${quotation.estimatedGstDetails.rate}%)`;
+        doc.font(FONT_REGULAR).fontSize(7.5).fillColor(COLOR_DARK_GRAY).text(gstLabel, sumRightX + 10, fY);
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7.5)
+          .fillColor(COLOR_BLACK)
+          .text(formatINR(quotation.estimatedGstDetails.totalTax), sumRightX + sumRightW - 100, fY, {
+            width: 90,
+            align: 'right',
+          });
+      }
+
+      // Prominent Estimated Grand Total Box
+      const grandTotalBoxY = currentY + summaryBlockH - 28;
+      doc
+        .save()
+        .roundedRect(sumRightX + 1, grandTotalBoxY, sumRightW - 2, 26, 2)
+        .fill(COLOR_BANNER_BG);
+
+      doc
+        .font(FONT_BOLD)
+        .fontSize(8)
+        .fillColor(COLOR_WHITE)
+        .text('ESTIMATED GRAND TOTAL', sumRightX + 10, grandTotalBoxY + 8);
+      doc
+        .font(FONT_BOLD)
+        .fontSize(10)
+        .fillColor(COLOR_WHITE)
+        .text(formatINR(quotation.estimatedGrandTotal), sumRightX + sumRightW - 110, grandTotalBoxY + 7, {
+          width: 100,
+          align: 'right',
+        });
+      doc.restore();
+
+      currentY += summaryBlockH + 10;
+
+      // Amount in words
+      const wordsText = `Amount in words: ${amountToWordsIndian(quotation.estimatedGrandTotal)}`;
+      doc
+        .font(FONT_REGULAR)
+        .fontSize(7)
+        .fillColor(COLOR_MUTED)
+        .text(wordsText, 36, currentY, { width: tableW, align: 'right' });
+
+      currentY += 12;
+
+      // ==========================================
+      // SECTION I: CLIENT ACCEPTANCE & AUTHORIZED SIGNATURE
+      // ==========================================
+      const sigH = 60;
+      if (currentY + sigH > pageBottomLimit) {
+        doc.addPage();
+        currentY = drawContinuationHeader();
+      }
+
+      const sigBoxW = (tableW - 20) / 2;
+
+      // Left: Client Acceptance Box
+      doc
+        .save()
+        .roundedRect(36, currentY, sigBoxW, sigH, 3)
+        .strokeColor(COLOR_BORDER)
+        .lineWidth(0.75)
+        .stroke();
+      doc.restore();
+
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7.5)
+        .fillColor(COLOR_MUTED)
+        .text('CLIENT ACCEPTANCE & APPROVAL', 44, currentY + 8);
+
+      if (quotation.status === 'Accepted' && quotation.approvalDetails) {
+        doc
+          .font(FONT_BOLD)
+          .fontSize(8)
+          .fillColor('#059669')
+          .text(`✓ APPROVED BY: ${quotation.approvalDetails.approvedBy}`, 44, currentY + 22);
+        const appDateStr = new Date(quotation.approvalDetails.approvalDate).toLocaleDateString(
+          'en-IN',
+          { day: '2-digit', month: 'short', year: 'numeric' }
+        );
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor(COLOR_DARK_GRAY)
+          .text(`Date: ${appDateStr}  |  Via: ${quotation.approvalDetails.approvalMethod}`, 44, currentY + 34);
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(6.5)
+          .fillColor(COLOR_MUTED)
+          .text('Authorized Client Signatory', 44, currentY + sigH - 12);
+      } else {
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor(COLOR_MUTED)
+          .text('Signature: .....................................................', 44, currentY + 26);
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(7)
+          .fillColor(COLOR_MUTED)
+          .text('Client Name: .................................................', 44, currentY + 38);
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(6.5)
+          .fillColor(COLOR_MUTED)
+          .text('Authorized Client Signatory', 44, currentY + sigH - 12);
+      }
+
+      // Right: Company Signatory Box
+      const compSigX = 36 + sigBoxW + 20;
+      doc
+        .save()
+        .roundedRect(compSigX, currentY, sigBoxW, sigH, 3)
+        .strokeColor(COLOR_BORDER)
+        .lineWidth(0.75)
+        .stroke();
+      doc.restore();
+
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7.5)
+        .fillColor(COLOR_MUTED)
+        .text('FOR ROYAL ENGINEERING & CONSTRUCTION', compSigX + 8, currentY + 8);
+      doc
+        .font(FONT_REGULAR)
+        .fontSize(7)
+        .fillColor(COLOR_MUTED)
+        .text('Authorized Company Signatory', compSigX + 8, currentY + sigH - 12);
+
+      // ==========================================
+      // SECTION J: BUFFERED FOOTER ON ALL PAGES
       // ==========================================
       const range = doc.bufferedPageRange();
-      for (let p = range.start; p < range.start + range.count; p++) {
-        doc.switchToPage(p);
-        doc.page.margins.bottom = 0; // prevent auto-page break
-        doc.font(FONT_REGULAR).fontSize(6.5).fillColor(COLOR_MUTED).text(
-          `Page ${p + 1} of ${range.count}`,
-          36,
-          804,
-          { align: 'right', width: tableW, lineBreak: false }
-        );
+      for (let i = 0; i < range.count; i++) {
+        doc.switchToPage(i);
+        doc.page.margins.bottom = 0;
+
+        // Subtle divider
+        doc
+          .save()
+          .strokeColor('#E2E8F0')
+          .lineWidth(0.5)
+          .moveTo(36, 798)
+          .lineTo(36 + tableW, 798)
+          .stroke();
+
+        // Footer Text
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(6.5)
+          .fillColor(COLOR_MUTED)
+          .text(
+            'This document is a commercial cost quotation and does not constitute a Tax Invoice.',
+            36,
+            804,
+            { lineBreak: false }
+          );
+
+        doc
+          .font(FONT_REGULAR)
+          .fontSize(6.5)
+          .fillColor(COLOR_MUTED)
+          .text(`Page ${i + 1} of ${range.count}`, 36 + tableW - 80, 804, {
+            width: 80,
+            align: 'right',
+            lineBreak: false,
+          });
+
+        doc.restore();
       }
 
       doc.end();

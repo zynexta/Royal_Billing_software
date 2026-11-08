@@ -115,6 +115,7 @@ export async function createQuotation(req: AuthenticatedRequest, res: Response) 
       projectName,
       projectLocation,
       projectDescription,
+      workCategory,
       workDetails,
       items,
       discount = { type: 'Fixed', value: 0 },
@@ -123,7 +124,13 @@ export async function createQuotation(req: AuthenticatedRequest, res: Response) 
       quotationDate,
       validUntil,
       paymentTerms,
+      paymentSchedule,
       termsAndConditions,
+      remarks,
+      declaration,
+      materialInclusions,
+      labourInclusions,
+      exclusions,
       notes,
       status = 'Draft',
     } = req.body;
@@ -135,6 +142,7 @@ export async function createQuotation(req: AuthenticatedRequest, res: Response) 
 
     // Calculate line items
     const calculatedItems = (items || []).map((item: any) => ({
+      area: item.area || '',
       description: item.description,
       quantity: Number(item.quantity) || 0,
       unit: item.unit || 'Units',
@@ -186,6 +194,7 @@ export async function createQuotation(req: AuthenticatedRequest, res: Response) 
       projectName,
       projectLocation,
       projectDescription,
+      workCategory,
       workDetails,
       items: calculatedItems,
       subtotal,
@@ -204,8 +213,16 @@ export async function createQuotation(req: AuthenticatedRequest, res: Response) 
         paymentTerms ||
         settings?.quotationSettings?.defaultPaymentTerms ||
         'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%',
+      paymentSchedule,
       termsAndConditions:
         termsAndConditions || settings?.quotationSettings?.termsAndConditions,
+      remarks,
+      declaration:
+        declaration ||
+        'We hereby declare that the total estimated quotation amount includes the work, materials, labour, tools and accessories specified in this quotation, subject to the agreed scope and conditions.',
+      materialInclusions,
+      labourInclusions,
+      exclusions,
       notes: notes || settings?.quotationSettings?.defaultNotes,
       status: status === 'Sent' ? 'Sent' : 'Draft',
       sentAt: status === 'Sent' ? new Date() : undefined,
@@ -245,6 +262,7 @@ export async function updateQuotation(req: AuthenticatedRequest, res: Response) 
       projectName,
       projectLocation,
       projectDescription,
+      workCategory,
       workDetails,
       items,
       discount,
@@ -253,12 +271,19 @@ export async function updateQuotation(req: AuthenticatedRequest, res: Response) 
       quotationDate,
       validUntil,
       paymentTerms,
+      paymentSchedule,
       termsAndConditions,
+      remarks,
+      declaration,
+      materialInclusions,
+      labourInclusions,
+      exclusions,
       notes,
     } = req.body;
 
     if (items) {
       quotation.items = items.map((item: any) => ({
+        area: item.area || '',
         description: item.description,
         quantity: Number(item.quantity) || 0,
         unit: item.unit || 'Units',
@@ -305,11 +330,18 @@ export async function updateQuotation(req: AuthenticatedRequest, res: Response) 
     if (projectName) quotation.projectName = projectName;
     if (projectLocation !== undefined) quotation.projectLocation = projectLocation;
     if (projectDescription !== undefined) quotation.projectDescription = projectDescription;
+    if (workCategory !== undefined) quotation.workCategory = workCategory;
     if (workDetails !== undefined) quotation.workDetails = workDetails;
     if (quotationDate) quotation.quotationDate = new Date(quotationDate);
     if (validUntil) quotation.validUntil = new Date(validUntil);
     if (paymentTerms !== undefined) quotation.paymentTerms = paymentTerms;
+    if (paymentSchedule !== undefined) quotation.paymentSchedule = paymentSchedule;
     if (termsAndConditions !== undefined) quotation.termsAndConditions = termsAndConditions;
+    if (remarks !== undefined) quotation.remarks = remarks;
+    if (declaration !== undefined) quotation.declaration = declaration;
+    if (materialInclusions !== undefined) quotation.materialInclusions = materialInclusions;
+    if (labourInclusions !== undefined) quotation.labourInclusions = labourInclusions;
+    if (exclusions !== undefined) quotation.exclusions = exclusions;
     if (notes !== undefined) quotation.notes = notes;
 
     await quotation.save();

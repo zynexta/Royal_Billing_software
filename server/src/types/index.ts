@@ -29,6 +29,7 @@ export type SupplyType = 'Intra-State' | 'Inter-State';
 
 export interface InvoiceItem {
   id?: string;
+  area?: string;
   description: string;
   quantity: number;
   unit: string;

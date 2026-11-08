@@ -16,6 +16,7 @@ export interface IQuotation extends Document {
   projectName: string;
   projectLocation?: string;
   projectDescription?: string;
+  workCategory?: string;
   workDetails?: string;
   items: InvoiceItem[];
   subtotal: number;
@@ -31,7 +32,13 @@ export interface IQuotation extends Document {
   quotationDate: Date;
   validUntil: Date;
   paymentTerms: string;
+  paymentSchedule?: string;
   termsAndConditions?: string;
+  remarks?: string;
+  declaration?: string;
+  materialInclusions?: string;
+  labourInclusions?: string;
+  exclusions?: string;
   notes?: string;
   status: QuotationStatus;
   approvalDetails?: ApprovalDetails;
@@ -46,6 +53,7 @@ export interface IQuotation extends Document {
 
 const QuotationItemSchema = new Schema<InvoiceItem>(
   {
+    area: { type: String, trim: true },
     description: { type: String, required: true },
     quantity: { type: Number, required: true, min: 0 },
     unit: { type: String, required: true, default: 'Units' },
@@ -113,6 +121,7 @@ const QuotationSchema = new Schema<IQuotation>(
     projectName: { type: String, required: true, trim: true },
     projectLocation: { type: String, trim: true },
     projectDescription: { type: String, trim: true },
+    workCategory: { type: String, trim: true },
     workDetails: { type: String, trim: true },
     items: { type: [QuotationItemSchema], required: true, default: [] },
     subtotal: { type: Number, required: true, default: 0 },
@@ -131,7 +140,13 @@ const QuotationSchema = new Schema<IQuotation>(
       type: String,
       default: 'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%',
     },
+    paymentSchedule: { type: String, trim: true },
     termsAndConditions: { type: String },
+    remarks: { type: String, trim: true },
+    declaration: { type: String, trim: true },
+    materialInclusions: { type: String, trim: true },
+    labourInclusions: { type: String, trim: true },
+    exclusions: { type: String, trim: true },
     notes: { type: String },
     status: {
       type: String,

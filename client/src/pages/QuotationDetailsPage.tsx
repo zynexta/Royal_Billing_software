@@ -518,20 +518,26 @@ export const QuotationDetailsPage: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50/70 border-b border-slate-200/80 text-[11px] font-black text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4 w-12 text-center">#</th>
-                  <th className="py-3 px-4">Description of Work</th>
+                  <th className="py-3 px-4 w-44">Work / Area</th>
+                  <th className="py-3 px-4">Description of Work / Scope</th>
                   <th className="py-3 px-4 text-center w-24">Quantity</th>
                   <th className="py-3 px-4 text-center w-24">Unit</th>
-                  <th className="py-3 px-4 text-right w-36">Rate</th>
+                  <th className="py-3 px-4 text-right w-32">Rate</th>
                   <th className="py-3 px-6 text-right w-36">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/90">
                 {quotation.items.map((it, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50">
+                  <tr key={idx} className="hover:bg-slate-50/50 align-top">
                     <td className="py-3.5 px-4 text-center font-mono text-slate-400 font-bold">
                       {idx + 1}
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-900">{it.description}</td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      {it.area || (it.description.includes('-') ? it.description.split('-')[0].trim() : 'Work Scope')}
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-slate-700 whitespace-pre-line leading-relaxed">
+                      {it.description}
+                    </td>
                     <td className="py-3.5 px-4 text-center font-mono text-slate-700">
                       {it.quantity}
                     </td>
@@ -603,6 +609,57 @@ export const QuotationDetailsPage: React.FC = () => {
                   {formatCurrency(quotation.estimatedGrandTotal)}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Remarks & Declaration Card (Client Reference Structure) */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 space-y-4">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+            Remarks, Specifications &amp; Proposal Declaration
+          </h3>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 text-xs">
+            <div>
+              <span className="font-bold text-slate-900">Remark: </span>
+              <span className="text-slate-700">
+                {quotation.remarks ||
+                  quotation.notes ||
+                  "All works shall comply with the manufacturer's recommendations and warranty requirements. Site inspections by the technical team shall be arranged as required to ensure warranty compliance."}
+              </span>
+            </div>
+
+            {(quotation.materialInclusions || quotation.labourInclusions || quotation.exclusions) && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200/60">
+                {quotation.materialInclusions && (
+                  <div>
+                    <span className="font-bold text-slate-800">Material Inclusions: </span>
+                    <span className="text-slate-600">{quotation.materialInclusions}</span>
+                  </div>
+                )}
+                {quotation.labourInclusions && (
+                  <div>
+                    <span className="font-bold text-slate-800">Labour Inclusions: </span>
+                    <span className="text-slate-600">{quotation.labourInclusions}</span>
+                  </div>
+                )}
+                {quotation.exclusions && (
+                  <div>
+                    <span className="font-bold text-rose-700">Exclusions: </span>
+                    <span className="text-slate-600">{quotation.exclusions}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-slate-200/60">
+              <span className="font-bold text-slate-900">Declaration: </span>
+              <span className="text-slate-800 font-medium">
+                {quotation.declaration ||
+                  `We hereby declare that the total estimated quotation amount of ${formatCurrency(
+                    quotation.estimatedGrandTotal
+                  )} includes all materials, labour, tools, and accessories required to complete the work to the highest standards, ensuring quality and meeting your expectations.`}
+              </span>
             </div>
           </div>
         </div>

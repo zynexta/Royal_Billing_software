@@ -48,6 +48,7 @@ export const CreateQuotationPage: React.FC = () => {
   const [projectName, setProjectName] = useState('');
   const [projectLocation, setProjectLocation] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [workCategory, setWorkCategory] = useState('');
   const [workDetails, setWorkDetails] = useState('');
 
   // Quotation Meta
@@ -60,6 +61,9 @@ export const CreateQuotationPage: React.FC = () => {
   const [paymentTerms, setPaymentTerms] = useState(
     'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%'
   );
+  const [paymentSchedule, setPaymentSchedule] = useState(
+    'Mobilization Advance: 30% | Running Work: 60% | Final Handover: 10%'
+  );
   const [termsAndConditions, setTermsAndConditions] = useState(
     '• Rates quoted are valid for 30 days from date of issue.\n• Taxes are estimated and applicable as per prevailing GST rules upon final tax invoice generation.\n• Extra items or structural scope variations will be billed separately upon mutual consent.\n• Mobilization will commence upon acceptance & advance payment.'
   );
@@ -67,14 +71,26 @@ export const CreateQuotationPage: React.FC = () => {
     'We appreciate the opportunity to submit our cost proposal for your esteemed project.'
   );
 
+  // Construction Specifications, Inclusions & Declaration (Client Reference Inspired)
+  const [remarks, setRemarks] = useState(
+    "All works shall comply with the manufacturer's recommendations and warranty requirements. Site inspections by the manufacturer's technical team shall be arranged as required to ensure warranty compliance."
+  );
+  const [declaration, setDeclaration] = useState(
+    'We hereby declare that the total estimated quotation amount includes all materials, labour, tools, and accessories required to complete the work to the highest standards, ensuring quality and meeting your expectations.'
+  );
+  const [materialInclusions, setMaterialInclusions] = useState('Putty, primer, paint, chemical sealants, adhesives');
+  const [labourInclusions, setLabourInclusions] = useState('Surface preparation, machine sanding, primer application, site cleaning');
+  const [exclusions, setExclusions] = useState('Major structural repairs, high-reach scaffolding beyond agreed limits');
+
   // Items
   const [items, setItems] = useState<InvoiceItem[]>([
     {
-      description: 'Foundation & Structural RCC Civil Construction Work',
+      area: 'Interior Wall With Luxury Finish',
+      description: '- One coat Cement Based Coarse Putty\n- Two coat Cement Based Fine Putty sanding by Machine\n- Chemical Treatment\n- One coat Alkali resistance Primer by Roller',
       quantity: 1,
       unit: 'Job',
-      rate: 250000,
-      amount: 250000,
+      rate: 140000,
+      amount: 140000,
     },
   ]);
 
@@ -125,11 +141,18 @@ export const CreateQuotationPage: React.FC = () => {
           setProjectName(q.projectName || '');
           setProjectLocation(q.projectLocation || '');
           setProjectDescription(q.projectDescription || '');
+          if (q.workCategory) setWorkCategory(q.workCategory);
           setWorkDetails(q.workDetails || '');
           setQuotationDate(new Date(q.quotationDate).toISOString().split('T')[0]);
           setValidUntil(new Date(q.validUntil).toISOString().split('T')[0]);
           if (q.paymentTerms) setPaymentTerms(q.paymentTerms);
+          if (q.paymentSchedule) setPaymentSchedule(q.paymentSchedule);
           if (q.termsAndConditions) setTermsAndConditions(q.termsAndConditions);
+          if (q.remarks) setRemarks(q.remarks);
+          if (q.declaration) setDeclaration(q.declaration);
+          if (q.materialInclusions) setMaterialInclusions(q.materialInclusions);
+          if (q.labourInclusions) setLabourInclusions(q.labourInclusions);
+          if (q.exclusions) setExclusions(q.exclusions);
           if (q.notes) setNotes(q.notes);
           if (q.items && q.items.length > 0) setItems(q.items);
           if (q.discount) {
@@ -179,7 +202,7 @@ export const CreateQuotationPage: React.FC = () => {
   const handleAddItem = () => {
     setItems((prev) => [
       ...prev,
-      { description: '', quantity: 1, unit: 'Job', rate: 0, amount: 0 },
+      { area: '', description: '', quantity: 1, unit: 'Job', rate: 0, amount: 0 },
     ]);
   };
 
@@ -222,6 +245,7 @@ export const CreateQuotationPage: React.FC = () => {
         projectName: projectName.trim(),
         projectLocation: projectLocation.trim(),
         projectDescription: projectDescription.trim(),
+        workCategory: workCategory.trim(),
         workDetails: workDetails.trim(),
         items: calculatedItems,
         discount: {
@@ -237,7 +261,13 @@ export const CreateQuotationPage: React.FC = () => {
         quotationDate,
         validUntil,
         paymentTerms,
+        paymentSchedule,
         termsAndConditions,
+        remarks: remarks.trim(),
+        declaration: declaration.trim(),
+        materialInclusions: materialInclusions.trim(),
+        labourInclusions: labourInclusions.trim(),
+        exclusions: exclusions.trim(),
         notes,
         status: statusToSet,
       };
@@ -394,7 +424,7 @@ export const CreateQuotationPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Project Name *
@@ -422,15 +452,28 @@ export const CreateQuotationPage: React.FC = () => {
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Project Scope / Work Description
+                Work Category / Trade
+              </label>
+              <input
+                type="text"
+                value={workCategory}
+                onChange={(e) => setWorkCategory(e.target.value)}
+                placeholder="e.g. Painting, Finishing, Civil RCC"
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Project Scope / Scope Overview
               </label>
               <textarea
                 rows={2}
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
-                placeholder="e.g. Complete turnkey construction including structural RCC, brick masonry, plastering and waterproofing."
+                placeholder="e.g. Turnkey painting and finishing work including surface preparation, machine putty sanding, and primer application."
                 className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
               />
             </div>
@@ -488,13 +531,15 @@ export const CreateQuotationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION D: WORK ITEMS TABLE */}
+        {/* SECTION D: DETAILED WORK DESCRIPTION TABLE */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
-              <h2 className="text-sm font-black text-slate-900">Section D — Work Items</h2>
+              <h2 className="text-sm font-black text-slate-900">
+                Section D — Detailed Work &amp; Area Specifications
+              </h2>
               <p className="text-xs text-slate-500 font-medium">
-                Line-item cost breakdown of construction activities
+                Specify work areas, multi-line scope descriptions, quantity and estimated cost
               </p>
             </div>
             <button
@@ -503,103 +548,219 @@ export const CreateQuotationPage: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-black bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Line Item</span>
+              <span>Add Work Item</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                  <th className="py-2.5 px-3 w-10 text-center">#</th>
-                  <th className="py-2.5 px-3">Description of Work *</th>
-                  <th className="py-2.5 px-3 w-24 text-center">Qty *</th>
-                  <th className="py-2.5 px-3 w-28 text-center">Unit</th>
-                  <th className="py-2.5 px-3 w-36 text-right">Rate (₹) *</th>
-                  <th className="py-2.5 px-3 w-36 text-right">Amount (₹)</th>
-                  <th className="py-2.5 px-3 w-12 text-center"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50">
-                    <td className="py-2.5 px-3 text-center font-mono text-slate-400 font-bold">
+          <div className="space-y-4">
+            {items.map((item, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all space-y-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-black text-white text-[11px] font-black font-mono flex items-center justify-center">
                       {idx + 1}
-                    </td>
+                    </span>
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Work Item #{idx + 1}
+                    </span>
+                  </div>
 
-                    <td className="py-2.5 px-3">
-                      <input
-                        type="text"
-                        required
-                        value={item.description}
-                        onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
-                        placeholder="e.g. Earth excavation and foundation RCC"
-                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-black"
-                      />
-                    </td>
+                  <div className="flex items-center gap-4">
+                    <div className="text-xs text-right">
+                      <span className="text-slate-400 font-medium">Item Amount: </span>
+                      <span className="font-mono font-black text-slate-900 text-sm">
+                        {formatCurrency(calculateItemAmount(item.quantity, item.rate))}
+                      </span>
+                    </div>
 
-                    <td className="py-2.5 px-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)
-                        }
-                        className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-center font-mono focus:outline-none focus:ring-1 focus:ring-black"
-                      />
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      <input
-                        type="text"
-                        value={item.unit}
-                        onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
-                        placeholder="Job / Sq.ft"
-                        className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-center focus:outline-none focus:ring-1 focus:ring-black"
-                      />
-                    </td>
-
-                    <td className="py-2.5 px-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={item.rate}
-                        onChange={(e) =>
-                          handleItemChange(idx, 'rate', parseFloat(e.target.value) || 0)
-                        }
-                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-right font-mono focus:outline-none focus:ring-1 focus:ring-black"
-                      />
-                    </td>
-
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                      {formatCurrency(calculateItemAmount(item.quantity, item.rate))}
-                    </td>
-
-                    <td className="py-2.5 px-3 text-center">
+                    {items.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
-                        className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Remove work item"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  {/* Work / Area */}
+                  <div className="md:col-span-5">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Work / Area *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={item.area || ''}
+                      onChange={(e) => handleItemChange(idx, 'area', e.target.value)}
+                      placeholder="e.g. Interior Wall With Luxury Finish"
+                      className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Quantity */}
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      required
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)
+                      }
+                      className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-center font-mono focus:outline-none focus:ring-1 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Unit */}
+                  <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Unit
+                    </label>
+                    <input
+                      type="text"
+                      value={item.unit}
+                      onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                      placeholder="Job / Sq.ft"
+                      className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-center focus:outline-none focus:ring-1 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Rate */}
+                  <div className="md:col-span-3">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Rate (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      required
+                      value={item.rate}
+                      onChange={(e) =>
+                        handleItemChange(idx, 'rate', parseFloat(e.target.value) || 0)
+                      }
+                      className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-right font-mono focus:outline-none focus:ring-1 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Description of Work / Scope (Multi-line) */}
+                  <div className="md:col-span-12">
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Description of Work / Detailed Specifications (Multi-line bullet points) *
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={item.description}
+                      onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
+                      placeholder={`e.g.\n- One coat Cement Based Coarse Putty (handle deep surface imperfections)\n- Two coat Cement Based Fine Putty sanding by Machine (For ultra-smooth profile)\n- Chemical Treatment\n- One coat Alkali resistance Primer by Roller`}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-black leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* SECTION E: GST ESTIMATION & FINANCIAL SUMMARY */}
+        {/* SECTION E: REMARKS, INCLUSIONS & DECLARATION */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-sm font-black text-slate-900">
+              Section E — Remarks, Inclusions &amp; Declaration
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Configure project remarks, material/labour inclusions, exclusions, and proposal declaration
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Remarks (Manufacturer &amp; Warranty Compliance)
+              </label>
+              <textarea
+                rows={2}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="e.g. All works shall comply with the manufacturer's recommendations and warranty requirements..."
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Material Inclusions
+              </label>
+              <input
+                type="text"
+                value={materialInclusions}
+                onChange={(e) => setMaterialInclusions(e.target.value)}
+                placeholder="e.g. Putty, primer, paints, chemical sealants, adhesives"
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Labour Inclusions
+              </label>
+              <input
+                type="text"
+                value={labourInclusions}
+                onChange={(e) => setLabourInclusions(e.target.value)}
+                placeholder="e.g. Surface preparation, machine sanding, primer application"
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Exclusions (Scope Limitations)
+              </label>
+              <input
+                type="text"
+                value={exclusions}
+                onChange={(e) => setExclusions(e.target.value)}
+                placeholder="e.g. Major structural brickwork repairs, high-reach scaffolding beyond 3 floors"
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Formal Quotation Declaration *
+              </label>
+              <textarea
+                rows={2}
+                required
+                value={declaration}
+                onChange={(e) => setDeclaration(e.target.value)}
+                placeholder="We hereby declare that the total estimated quotation amount includes..."
+                className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION F: GST ESTIMATION & FINANCIAL SUMMARY */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* GST Configuration Box */}
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 space-y-4">
             <div className="border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-black text-slate-900">Section E — GST Estimation</h2>
+              <h2 className="text-sm font-black text-slate-900">Section F — GST Estimation</h2>
               <p className="text-xs text-slate-500 font-medium">
                 Configure estimated tax calculation (finalized on Tax Invoice)
               </p>
@@ -751,10 +912,10 @@ export const CreateQuotationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION F: TERMS & CONDITIONS */}
+        {/* SECTION G: TERMS & CONDITIONS */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-6 space-y-4">
           <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-sm font-black text-slate-900">Section F — Terms &amp; Conditions</h2>
+            <h2 className="text-sm font-black text-slate-900">Section G — Terms &amp; Conditions</h2>
             <p className="text-xs text-slate-500 font-medium">
               Standard commercial conditions and proposal notes
             </p>

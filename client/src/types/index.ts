@@ -52,6 +52,7 @@ export type SupplyType = 'Intra-State' | 'Inter-State';
 
 export interface InvoiceItem {
   id?: string;
+  area?: string;
   description: string;
   quantity: number;
   unit: string;
@@ -131,6 +132,7 @@ export interface Quotation {
   projectName: string;
   projectLocation?: string;
   projectDescription?: string;
+  workCategory?: string;
   workDetails?: string;
   items: InvoiceItem[];
   subtotal: number;
@@ -146,7 +148,13 @@ export interface Quotation {
   quotationDate: string;
   validUntil: string;
   paymentTerms: string;
+  paymentSchedule?: string;
   termsAndConditions?: string;
+  remarks?: string;
+  declaration?: string;
+  materialInclusions?: string;
+  labourInclusions?: string;
+  exclusions?: string;
   notes?: string;
   status: QuotationStatus;
   approvalDetails?: ApprovalDetails;

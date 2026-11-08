@@ -30,7 +30,15 @@ export interface Client {
 
 export type InvoiceStatus = 'Draft' | 'Issued' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Cancelled';
 export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired' | 'Converted';
-export type ApprovalMethod = 'WhatsApp' | 'Phone' | 'In Person' | 'Written Confirmation' | 'Other';
+export type ApprovalMethod =
+  | 'WhatsApp'
+  | 'Email'
+  | 'Phone'
+  | 'Verbal'
+  | 'In Person'
+  | 'Written'
+  | 'Written Confirmation'
+  | 'Other';
 
 export interface ApprovalDetails {
   approvedBy: string;

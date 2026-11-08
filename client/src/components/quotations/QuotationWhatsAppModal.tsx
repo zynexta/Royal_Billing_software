@@ -9,12 +9,14 @@ interface QuotationWhatsAppModalProps {
   isOpen: boolean;
   onClose: () => void;
   quotation: Quotation | null;
+  onStatusChanged?: (updatedQuotation: Quotation) => void;
 }
 
 export const QuotationWhatsAppModal: React.FC<QuotationWhatsAppModalProps> = ({
   isOpen,
   onClose,
   quotation,
+  onStatusChanged,
 }) => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
@@ -58,6 +60,15 @@ export const QuotationWhatsAppModal: React.FC<QuotationWhatsAppModalProps> = ({
       setIsSharingFile(true);
       setErrorMsg(null);
 
+      // Record send action if quotation is still in draft
+      if (quotation.status === 'Draft') {
+        quotationService.sendQuotation(quotation._id).then((res) => {
+          if (res.data?.data && onStatusChanged) {
+            onStatusChanged(res.data.data);
+          }
+        }).catch(() => {});
+      }
+
       let blob = pdfBlob;
       if (!blob) {
         const res = await fetch(quotationService.getPDFDownloadUrl(quotation._id));
@@ -97,6 +108,13 @@ export const QuotationWhatsAppModal: React.FC<QuotationWhatsAppModalProps> = ({
 
   // 2. Open WhatsApp chat directly
   const handleOpenWhatsAppChat = () => {
+    if (quotation.status === 'Draft') {
+      quotationService.sendQuotation(quotation._id).then((res) => {
+        if (res.data?.data && onStatusChanged) {
+          onStatusChanged(res.data.data);
+        }
+      }).catch(() => {});
+    }
     openQuotationWhatsAppDirect(quotation);
     onClose();
   };
@@ -263,3 +281,4 @@ export const QuotationWhatsAppModal: React.FC<QuotationWhatsAppModalProps> = ({
     </div>
   );
 };
+

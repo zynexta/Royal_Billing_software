@@ -24,6 +24,7 @@ import { quotationService } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { QuotationApprovalModal } from '../components/quotations/QuotationApprovalModal';
+import { QuotationRejectModal } from '../components/quotations/QuotationRejectModal';
 import { QuotationWhatsAppModal } from '../components/quotations/QuotationWhatsAppModal';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 
@@ -37,9 +38,11 @@ export const QuotationDetailsPage: React.FC = () => {
 
   // Modals state
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [isIssuing, setIsIssuing] = useState(false);
 
@@ -85,10 +88,13 @@ export const QuotationDetailsPage: React.FC = () => {
     if (!quotation) return;
     try {
       setIsApproving(true);
-      await quotationService.acceptQuotation(quotation._id, data);
+      const res = await quotationService.acceptQuotation(quotation._id, data);
       toast.success(
         `Quotation ${quotation.quotationNumber} approved and marked as Accepted!`
       );
+      if (res.data?.data) {
+        setQuotation(res.data.data);
+      }
       setIsApprovalModalOpen(false);
       fetchQuotation();
     } catch (err: any) {
@@ -98,18 +104,22 @@ export const QuotationDetailsPage: React.FC = () => {
     }
   };
 
-  // Reject Quotation
-  const handleRejectQuotation = async () => {
+  // Reject Quotation Confirm
+  const handleRejectConfirm = async (reason: string) => {
     if (!quotation) return;
-    const reason = window.prompt('Please enter reason for rejection (optional):');
-    if (reason === null) return;
-
     try {
-      await quotationService.rejectQuotation(quotation._id, reason);
+      setIsRejecting(true);
+      const res = await quotationService.rejectQuotation(quotation._id, reason);
       toast.info(`Quotation ${quotation.quotationNumber} marked as Rejected`);
+      if (res.data?.data) {
+        setQuotation(res.data.data);
+      }
+      setIsRejectModalOpen(false);
       fetchQuotation();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to reject quotation');
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -270,11 +280,27 @@ export const QuotationDetailsPage: React.FC = () => {
                   )}
                   <span>Issue Quotation</span>
                 </button>
+
+                <button
+                  onClick={() => setIsApprovalModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl transition-all shadow-soft"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Record Client Approval</span>
+                </button>
+
+                <button
+                  onClick={() => setIsRejectModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-700 bg-white hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>Mark Rejected</span>
+                </button>
               </>
             )}
 
-            {/* SENT Actions */}
-            {quotation.status === 'Sent' && (
+            {/* SENT or EXPIRED Actions */}
+            {(quotation.status === 'Sent' || quotation.status === 'Expired') && (
               <>
                 <button
                   onClick={() => setIsApprovalModalOpen(true)}
@@ -285,7 +311,7 @@ export const QuotationDetailsPage: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={handleRejectQuotation}
+                  onClick={() => setIsRejectModalOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-700 bg-white hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors"
                 >
                   <XCircle className="w-3.5 h-3.5" />
@@ -594,10 +620,22 @@ export const QuotationDetailsPage: React.FC = () => {
         onConfirm={handleApprovalConfirm}
       />
 
+      <QuotationRejectModal
+        isOpen={isRejectModalOpen}
+        quotation={quotation}
+        isLoading={isRejecting}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleRejectConfirm}
+      />
+
       <QuotationWhatsAppModal
         isOpen={isShareModalOpen}
         quotation={quotation}
         onClose={() => setIsShareModalOpen(false)}
+        onStatusChanged={(updated) => {
+          setQuotation(updated);
+          fetchQuotation();
+        }}
       />
 
       <ConfirmationModal

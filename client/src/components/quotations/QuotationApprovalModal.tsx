@@ -150,9 +150,11 @@ export const QuotationApprovalModal: React.FC<QuotationApprovalModalProps> = ({
                 className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium"
               >
                 <option value="WhatsApp">WhatsApp</option>
+                <option value="Email">Email</option>
                 <option value="Phone">Phone</option>
-                <option value="In Person">In Person</option>
-                <option value="Written Confirmation">Written Confirmation</option>
+                <option value="Verbal">Verbal / Discussion</option>
+                <option value="In Person">In Person Meeting</option>
+                <option value="Written Confirmation">Written / Formal Letter</option>
                 <option value="Other">Other</option>
               </select>
             </div>
@@ -202,3 +204,4 @@ export const QuotationApprovalModal: React.FC<QuotationApprovalModalProps> = ({
     </div>
   );
 };
+

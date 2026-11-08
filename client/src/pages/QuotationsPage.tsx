@@ -16,6 +16,8 @@ import {
   AlertCircle,
   FileCheck2,
   Check,
+  Send,
+  XCircle,
 } from 'lucide-react';
 import { Quotation, QuotationStatus, ApprovalMethod } from '../types';
 import { quotationService } from '../services/api';
@@ -23,6 +25,7 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { QuotationApprovalModal } from '../components/quotations/QuotationApprovalModal';
+import { QuotationRejectModal } from '../components/quotations/QuotationRejectModal';
 import { QuotationWhatsAppModal } from '../components/quotations/QuotationWhatsAppModal';
 
 export const QuotationsPage: React.FC = () => {
@@ -37,8 +40,11 @@ export const QuotationsPage: React.FC = () => {
   // Modals state
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [quotationForApproval, setQuotationForApproval] = useState<Quotation | null>(null);
+  const [quotationForReject, setQuotationForReject] = useState<Quotation | null>(null);
   const [quotationForShare, setQuotationForShare] = useState<Quotation | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isIssuingId, setIsIssuingId] = useState<string | null>(null);
   const [isConvertingId, setIsConvertingId] = useState<string | null>(null);
 
   const statusTabs = ['All', 'Draft', 'Sent', 'Accepted', 'Rejected', 'Expired', 'Converted'];
@@ -89,16 +95,61 @@ export const QuotationsPage: React.FC = () => {
     if (!quotationForApproval) return;
     try {
       setIsApproving(true);
-      await quotationService.acceptQuotation(quotationForApproval._id, data);
+      const res = await quotationService.acceptQuotation(quotationForApproval._id, data);
       toast.success(
         `Quotation ${quotationForApproval.quotationNumber} approved and marked as Accepted!`
       );
+      if (res.data?.data) {
+        setQuotations((prev) =>
+          prev.map((item) => (item._id === res.data.data._id ? res.data.data : item))
+        );
+      }
       setQuotationForApproval(null);
       fetchQuotations();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to record approval');
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  // Handle Reject Quotation
+  const handleRejectConfirm = async (reason: string) => {
+    if (!quotationForReject) return;
+    try {
+      setIsRejecting(true);
+      const res = await quotationService.rejectQuotation(quotationForReject._id, reason);
+      toast.info(`Quotation ${quotationForReject.quotationNumber} marked as Rejected`);
+      if (res.data?.data) {
+        setQuotations((prev) =>
+          prev.map((item) => (item._id === res.data.data._id ? res.data.data : item))
+        );
+      }
+      setQuotationForReject(null);
+      fetchQuotations();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to reject quotation');
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  // Handle Quick Issue / Send
+  const handleIssueQuotation = async (q: Quotation) => {
+    try {
+      setIsIssuingId(q._id);
+      const res = await quotationService.issueQuotation(q._id);
+      toast.success(`Quotation ${q.quotationNumber} marked as Sent to client`);
+      if (res.data?.data) {
+        setQuotations((prev) =>
+          prev.map((item) => (item._id === res.data.data._id ? res.data.data : item))
+        );
+      }
+      fetchQuotations();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to issue quotation');
+    } finally {
+      setIsIssuingId(null);
     }
   };
 
@@ -356,8 +407,21 @@ export const QuotationsPage: React.FC = () => {
                             </button>
                           )}
 
-                          {/* Record Approval Button (if Sent) */}
-                          {q.status === 'Sent' && (
+                          {/* Quick Send (if Draft) */}
+                          {q.status === 'Draft' && (
+                            <button
+                              onClick={() => handleIssueQuotation(q)}
+                              disabled={isIssuingId === q._id}
+                              title="Mark Quotation as Sent"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors"
+                            >
+                              <Send className="w-3.5 h-3.5 text-slate-600" />
+                              <span>Send</span>
+                            </button>
+                          )}
+
+                          {/* Record Approval Button (if Draft, Sent, or Expired) */}
+                          {(q.status === 'Sent' || q.status === 'Draft' || q.status === 'Expired') && (
                             <button
                               onClick={() => setQuotationForApproval(q)}
                               title="Record Client Approval"
@@ -365,6 +429,18 @@ export const QuotationsPage: React.FC = () => {
                             >
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                               <span>Approve</span>
+                            </button>
+                          )}
+
+                          {/* Reject Button (if Draft, Sent, or Expired) */}
+                          {(q.status === 'Sent' || q.status === 'Draft' || q.status === 'Expired') && (
+                            <button
+                              onClick={() => setQuotationForReject(q)}
+                              title="Mark Quotation as Rejected"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors"
+                            >
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Reject</span>
                             </button>
                           )}
 
@@ -462,10 +538,24 @@ export const QuotationsPage: React.FC = () => {
         onConfirm={handleApprovalConfirm}
       />
 
+      <QuotationRejectModal
+        isOpen={!!quotationForReject}
+        quotation={quotationForReject}
+        isLoading={isRejecting}
+        onClose={() => setQuotationForReject(null)}
+        onConfirm={handleRejectConfirm}
+      />
+
       <QuotationWhatsAppModal
         isOpen={!!quotationForShare}
         quotation={quotationForShare}
         onClose={() => setQuotationForShare(null)}
+        onStatusChanged={(updated) => {
+          setQuotations((prev) =>
+            prev.map((item) => (item._id === updated._id ? updated : item))
+          );
+          fetchQuotations();
+        }}
       />
     </>
   );

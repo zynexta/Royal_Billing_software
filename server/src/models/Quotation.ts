@@ -77,7 +77,16 @@ const ApprovalDetailsSchema = new Schema<ApprovalDetails>(
     approvalDate: { type: Date, required: true, default: Date.now },
     approvalMethod: {
       type: String,
-      enum: ['WhatsApp', 'Phone', 'In Person', 'Written Confirmation', 'Other'],
+      enum: [
+        'WhatsApp',
+        'Email',
+        'Phone',
+        'Verbal',
+        'In Person',
+        'Written',
+        'Written Confirmation',
+        'Other',
+      ],
       default: 'WhatsApp',
     },
     approvalNotes: { type: String },
@@ -144,3 +153,4 @@ QuotationSchema.index({ quotationDate: -1, status: 1 });
 QuotationSchema.index({ projectName: 'text', quotationNumber: 'text' });
 
 export const Quotation = mongoose.model<IQuotation>('Quotation', QuotationSchema);
+

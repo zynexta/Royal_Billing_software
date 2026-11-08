@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import mongoose from 'express';
+import mongoose from 'mongoose';
 import { Quotation, IQuotation } from '../models/Quotation.js';
 import { Invoice, IInvoice } from '../models/Invoice.js';
 import { Client } from '../models/Client.js';
@@ -87,7 +87,22 @@ export async function getQuotationById(req: Request, res: Response) {
       return sendError(res, 'Quotation not found', 404);
     }
 
-    return sendSuccess(res, quotation);
+    const now = new Date();
+    let currentStatus: QuotationStatus = quotation.status;
+    if (
+      (quotation.status === 'Sent' || quotation.status === 'Draft') &&
+      quotation.validUntil &&
+      new Date(quotation.validUntil) < now
+    ) {
+      currentStatus = 'Expired';
+    }
+
+    const result = {
+      ...quotation.toObject(),
+      status: currentStatus,
+    };
+
+    return sendSuccess(res, result);
   } catch (error) {
     return sendError(res, 'Failed to fetch quotation details', 500, (error as Error).message);
   }
@@ -385,6 +400,19 @@ export async function acceptQuotation(req: AuthenticatedRequest, res: Response) 
       return sendError(res, 'This quotation has already been converted into a Tax Invoice.', 400);
     }
 
+    if (quotation.status === 'Rejected') {
+      return sendError(
+        res,
+        'Cannot approve a quotation that has been marked as Rejected. Please create a new quotation or revise first.',
+        400
+      );
+    }
+
+    // Auto-record sent timestamp if accepted directly from Draft
+    if (quotation.status === 'Draft' && !quotation.sentAt) {
+      quotation.sentAt = new Date();
+    }
+
     quotation.status = 'Accepted';
     quotation.approvalDetails = {
       approvedBy: approvedBy.trim(),
@@ -427,10 +455,11 @@ export async function rejectQuotation(req: AuthenticatedRequest, res: Response) 
     }
 
     quotation.status = 'Rejected';
-    if (reason) {
+    if (reason && reason.trim()) {
+      const formattedReason = `[Rejection Reason: ${reason.trim()}]`;
       quotation.notes = quotation.notes
-        ? `${quotation.notes}\n[Rejection Reason: ${reason}]`
-        : `[Rejection Reason: ${reason}]`;
+        ? `${quotation.notes}\n${formattedReason}`
+        : formattedReason;
     }
 
     await quotation.save();

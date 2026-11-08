@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -12,6 +12,7 @@ import {
   HelpCircle,
   FileCheck2,
 } from 'lucide-react';
+import { Header } from '../components/layout/Header';
 import { clientService, quotationService, settingsService } from '../services/api';
 import { Client, InvoiceItem, SupplyType, CompanySettings, Quotation } from '../types';
 import {
@@ -27,6 +28,7 @@ import { ClientModal } from '../components/clients/ClientModal';
 import { useToast } from '../context/ToastContext';
 
 export const CreateQuotationPage: React.FC = () => {
+  const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
@@ -271,7 +273,14 @@ export const CreateQuotationPage: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-6 pb-20 max-w-5xl mx-auto">
+      <Header
+        onOpenSidebar={onOpenSidebar}
+        title={isEditMode ? `Edit Quotation ${existingQuotationNumber}` : 'New Commercial Quotation'}
+        subtitle="Prepare itemized civil estimate, scope specifications & calculate GST"
+        showDefaultActions={false}
+      />
+
+      <main className="p-4 sm:p-6 md:p-8 space-y-6 max-w-5xl mx-auto w-full pb-24">
         {/* Top Header & Breadcrumb */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -808,7 +817,7 @@ export const CreateQuotationPage: React.FC = () => {
             <span>Issue &amp; Finalize Quotation</span>
           </button>
         </div>
-      </div>
+      </main>
 
       {/* Inline Client Creation Modal */}
       <ClientModal

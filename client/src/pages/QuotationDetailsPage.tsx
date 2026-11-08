@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
   Download,
@@ -19,6 +19,7 @@ import {
   Send,
   Loader2,
 } from 'lucide-react';
+import { Header } from '../components/layout/Header';
 import { Quotation, QuotationStatus, ApprovalMethod } from '../types';
 import { quotationService } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -29,6 +30,7 @@ import { QuotationWhatsAppModal } from '../components/quotations/QuotationWhatsA
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 
 export const QuotationDetailsPage: React.FC = () => {
+  const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
@@ -223,7 +225,14 @@ export const QuotationDetailsPage: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-6 pb-20 max-w-5xl mx-auto">
+      <Header
+        onOpenSidebar={onOpenSidebar}
+        title={quotation ? quotation.quotationNumber : 'Quotation Details'}
+        subtitle={quotation ? quotation.projectName : 'Commercial cost estimate & approval status'}
+        showDefaultActions={false}
+      />
+
+      <main className="p-4 sm:p-6 md:p-8 space-y-6 max-w-5xl mx-auto w-full pb-24">
         {/* Top Navigation & Status Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -609,7 +618,7 @@ export const QuotationDetailsPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Modals */}
       <QuotationApprovalModal

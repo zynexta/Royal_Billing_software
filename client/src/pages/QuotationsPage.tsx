@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -19,6 +19,7 @@ import {
   Send,
   XCircle,
 } from 'lucide-react';
+import { Header } from '../components/layout/Header';
 import { Quotation, QuotationStatus, ApprovalMethod } from '../types';
 import { quotationService } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
@@ -29,6 +30,7 @@ import { QuotationRejectModal } from '../components/quotations/QuotationRejectMo
 import { QuotationWhatsAppModal } from '../components/quotations/QuotationWhatsAppModal';
 
 export const QuotationsPage: React.FC = () => {
+  const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -215,62 +217,52 @@ export const QuotationsPage: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-black text-white">
-                <ClipboardList className="w-4 h-4" />
-              </span>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-                Quotation Management
-              </h1>
+      <Header
+        onOpenSidebar={onOpenSidebar}
+        title="Quotation Management"
+        subtitle="Prepare cost estimates, share via WhatsApp, track client approvals & convert to Tax Invoices"
+      />
+
+      <main className="p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full pb-24">
+        {/* Controls Bar: Search, Status Filter & Create Button */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3 flex-1">
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search quotation #, project, client..."
+                className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-soft"
+              />
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Prepare cost estimates, share via WhatsApp, track client approvals &amp; convert to Tax Invoices
-            </p>
+
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl overflow-x-auto no-scrollbar w-full sm:w-auto shadow-soft py-1">
+              {statusTabs.map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-3 sm:px-3.5 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
+                    statusFilter === st
+                      ? 'bg-black text-white shadow-soft scale-[1.02]'
+                      : 'text-slate-600 hover:text-black hover:bg-slate-100'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
           </div>
 
           <Link
             to="/quotations/new"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-black hover:bg-slate-800 rounded-xl shadow-soft transition-all active:scale-95 shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-black hover:bg-slate-900 rounded-xl shadow-soft hover:shadow-premium transition-all active:scale-[0.98] shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Quotation</span>
           </Link>
-        </div>
-
-        {/* Filters and Search Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search quotation #, project, client..."
-              className="w-full pl-10 pr-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black font-medium shadow-soft"
-            />
-          </div>
-
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl overflow-x-auto no-scrollbar shadow-soft">
-            {statusTabs.map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
-                  statusFilter === st
-                    ? 'bg-black text-white shadow-soft scale-[1.02]'
-                    : 'text-slate-600 hover:text-black hover:bg-slate-100'
-                }`}
-              >
-                {st}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Quotations Table */}
@@ -517,7 +509,7 @@ export const QuotationsPage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {/* Modals */}
       <ConfirmationModal

@@ -1,5 +1,6 @@
 import { Invoice, Quotation } from '../types';
 import { formatCurrency } from './formatters';
+import { invoiceService, quotationService } from '../services/api';
 
 export function getInvoiceWhatsAppUrl(invoice: Invoice): string {
   const clientName = invoice.clientSnapshot?.clientName || 'Client';
@@ -8,7 +9,7 @@ export function getInvoiceWhatsAppUrl(invoice: Invoice): string {
   const dateFormatted = new Date(invoice.invoiceDate).toLocaleDateString('en-IN');
   const received = invoice.amountReceivedSnapshot ?? 0;
   const balance = invoice.balanceDueSnapshot ?? Math.max(0, invoice.grandTotal - received);
-  const pdfUrl = `${window.location.origin.replace(':5173', ':5000')}/api/invoices/${invoice._id}/pdf`;
+  const pdfUrl = invoiceService.getPDFDownloadUrl(invoice._id);
 
   const text =
     `Hello ${clientName},\n\n` +
@@ -41,7 +42,7 @@ export function getQuotationWhatsAppUrl(quotation: Quotation): string {
   const projectName = quotation.projectName || 'Project';
   const phone = quotation.clientSnapshot?.phone || '';
   const validUntilFormatted = new Date(quotation.validUntil).toLocaleDateString('en-IN');
-  const pdfUrl = `${window.location.origin.replace(':5173', ':5000')}/api/quotations/${quotation._id}/pdf`;
+  const pdfUrl = quotationService.getPDFDownloadUrl(quotation._id);
 
   const text =
     `Hello ${clientName},\n\n` +

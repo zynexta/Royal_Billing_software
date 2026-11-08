@@ -245,10 +245,19 @@ export const InvoicesPage: React.FC = () => {
                       <td className="py-4 px-6">
                         <Link
                           to={`/invoices/${inv._id}`}
-                          className="font-mono font-bold text-slate-900 hover:text-black hover:underline"
+                          className="font-mono font-bold text-slate-900 hover:text-black hover:underline block"
                         >
                           {inv.invoiceNumber}
                         </Link>
+                        {inv.sourceQuotationNumber && (
+                          <Link
+                            to={`/quotations/${inv.sourceQuotationId}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-slate-400 hover:text-slate-900 hover:underline mt-0.5"
+                            title={`Converted from Quotation ${inv.sourceQuotationNumber}`}
+                          >
+                            <span>from {inv.sourceQuotationNumber}</span>
+                          </Link>
+                        )}
                       </td>
 
                       <td className="py-4 px-4 text-slate-600 whitespace-nowrap font-medium">

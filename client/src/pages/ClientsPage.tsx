@@ -133,6 +133,7 @@ export const ClientsPage: React.FC = () => {
                     <th className="py-4 px-6">Client / Business</th>
                     <th className="py-4 px-4">Contact</th>
                     <th className="py-4 px-4">Location & GSTIN</th>
+                    <th className="py-4 px-4 text-center">Quotations</th>
                     <th className="py-4 px-4 text-center">Invoices</th>
                     <th className="py-4 px-4 text-right">Total Billed</th>
                     <th className="py-4 px-4 text-right">Outstanding</th>
@@ -178,6 +179,12 @@ export const ClientsPage: React.FC = () => {
                         ) : (
                           <span className="text-[10px] text-slate-400">Unregistered</span>
                         )}
+                      </td>
+
+                      <td className="py-4 px-4 text-center">
+                        <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100 font-mono font-bold text-slate-800 border border-slate-200/80">
+                          {c.quotationCount || 0}
+                        </span>
                       </td>
 
                       <td className="py-4 px-4 text-center">

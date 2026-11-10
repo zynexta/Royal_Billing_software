@@ -21,6 +21,7 @@ export interface Client {
   gstin?: string;
   isArchived: boolean;
   invoiceCount?: number;
+  quotationCount?: number;
   totalBilled?: number;
   totalPaid?: number;
   outstandingBalance?: number;

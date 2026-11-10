@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Client } from '../models/Client.js';
 import { Invoice } from '../models/Invoice.js';
+import { Quotation } from '../models/Quotation.js';
 import { Payment } from '../models/Payment.js';
 import { sendError, sendSuccess } from '../utils/response.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
@@ -38,9 +39,20 @@ export async function getClients(req: Request, res: Response) {
     // Aggregate billing summary for each client
     const clientIds = clients.map((c) => c._id);
 
-    const invoices = await Invoice.find({
-      clientId: { $in: clientIds },
-      status: { $ne: 'Cancelled' },
+    const [invoices, quotations] = await Promise.all([
+      Invoice.find({
+        clientId: { $in: clientIds },
+        status: { $ne: 'Cancelled' },
+      }),
+      Quotation.find({
+        clientId: { $in: clientIds },
+      }).select('clientId'),
+    ]);
+
+    const quotationCountMap: Record<string, number> = {};
+    quotations.forEach((q) => {
+      const cid = q.clientId.toString();
+      quotationCountMap[cid] = (quotationCountMap[cid] || 0) + 1;
     });
 
     const clientStats: Record<string, { totalBilled: number; totalPaid: number; invoiceCount: number; outstanding: number }> = {};
@@ -64,6 +76,7 @@ export async function getClients(req: Request, res: Response) {
       return {
         ...c.toObject(),
         invoiceCount: stats.invoiceCount,
+        quotationCount: quotationCountMap[c._id.toString()] || 0,
         totalBilled: round2(stats.totalBilled),
         totalPaid: round2(stats.totalPaid),
         outstandingBalance: round2(stats.outstanding),
@@ -124,8 +137,11 @@ export async function getClientById(req: Request, res: Response) {
       return sendError(res, 'Client not found', 404);
     }
 
-    const invoices = await Invoice.find({ clientId: client._id }).sort({ invoiceDate: -1 });
-    const payments = await Payment.find({ clientId: client._id, status: 'Completed' }).sort({ createdAt: -1, paymentDate: -1 });
+    const [invoices, quotations, payments] = await Promise.all([
+      Invoice.find({ clientId: client._id }).sort({ invoiceDate: -1 }),
+      Quotation.find({ clientId: client._id }).sort({ quotationDate: -1, createdAt: -1 }),
+      Payment.find({ clientId: client._id, status: 'Completed' }).sort({ createdAt: -1, paymentDate: -1 }),
+    ]);
 
     const activeInvoices = invoices.filter((i) => i.status !== 'Draft' && i.status !== 'Cancelled');
     const totalBilled = round2(activeInvoices.reduce((acc, i) => acc + i.grandTotal, 0));
@@ -148,8 +164,10 @@ export async function getClientById(req: Request, res: Response) {
         totalPaid: round2(totalPaid),
         outstandingBalance,
         invoiceCount: invoices.length,
+        quotationCount: quotations.length,
       },
       invoices,
+      quotations,
       payments,
     });
   } catch (error) {

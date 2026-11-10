@@ -13,10 +13,11 @@ import {
   DollarSign,
   TrendingUp,
   AlertCircle,
+  ClipboardList,
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { clientService } from '../services/api';
-import { Client, Invoice, Payment } from '../types';
+import { Client, Invoice, Payment, Quotation, QuotationStatus } from '../types';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '../utils/formatters';
 import { PaymentModal } from '../components/payments/PaymentModal';
 
@@ -64,7 +65,26 @@ export const ClientDetailsPage: React.FC = () => {
     );
   }
 
-  const stats = client.stats || { totalBilled: 0, totalPaid: 0, outstandingBalance: 0, invoiceCount: 0 };
+  const stats = client.stats || { totalBilled: 0, totalPaid: 0, outstandingBalance: 0, invoiceCount: 0, quotationCount: 0 };
+
+  const getQuotationStatusBadge = (status: QuotationStatus | string) => {
+    switch (status) {
+      case 'Draft':
+        return 'bg-slate-100 text-slate-700 border-slate-300';
+      case 'Sent':
+        return 'bg-amber-50 text-amber-700 border-amber-300';
+      case 'Accepted':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-300';
+      case 'Rejected':
+        return 'bg-rose-50 text-rose-700 border-rose-300';
+      case 'Expired':
+        return 'bg-zinc-100 text-zinc-600 border-zinc-300';
+      case 'Converted':
+        return 'bg-black text-white border-black';
+      default:
+        return 'bg-slate-100 text-slate-700 border-slate-300';
+    }
+  };
 
   return (
     <>
@@ -86,6 +106,15 @@ export const ClientDetailsPage: React.FC = () => {
           </Link>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              to="/quotations/new"
+              state={{ preselectedClientId: client._id }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl shadow-soft transition-all active:scale-[0.98]"
+            >
+              <ClipboardList className="w-3.5 h-3.5 text-slate-700" />
+              <span>New Quotation</span>
+            </Link>
+
             <button
               onClick={() => setIsPaymentModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors"
@@ -155,7 +184,9 @@ export const ClientDetailsPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-extrabold text-slate-900 mt-2">{formatCurrency(stats.totalBilled)}</p>
-                <p className="text-xs text-mutedText mt-0.5">{stats.invoiceCount} Total Invoices</p>
+                <p className="text-xs text-mutedText mt-0.5">
+                  {stats.invoiceCount} Invoices · {client.quotations?.length ?? stats.quotationCount ?? 0} Quotations
+                </p>
               </div>
             </div>
 
@@ -183,6 +214,97 @@ export const ClientDetailsPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Client Quotations Ledger */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-slate-700" />
+              <h4 className="text-sm font-bold text-slate-900">
+                Commercial Quotations ({client.quotations?.length || 0})
+              </h4>
+            </div>
+            <Link
+              to="/quotations/new"
+              state={{ preselectedClientId: client._id }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-black hover:underline"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Quotation</span>
+            </Link>
+          </div>
+
+          {!client.quotations || client.quotations.length === 0 ? (
+            <div className="p-8 text-center text-xs text-mutedText">
+              No quotations created for this client yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-6">Quotation #</th>
+                    <th className="py-3 px-4">Project</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Valid Until</th>
+                    <th className="py-3 px-4 text-right">Taxable</th>
+                    <th className="py-3 px-4 text-right">Estimated Total</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {client.quotations.map((q: Quotation) => (
+                    <tr key={q._id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-6 font-mono font-bold text-slate-900">
+                        <Link to={`/quotations/${q._id}`} className="hover:underline">
+                          {q.quotationNumber}
+                        </Link>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-slate-800">
+                        <div className="truncate max-w-[180px] font-bold">{q.projectName}</div>
+                        {q.projectLocation && (
+                          <div className="text-[10px] text-slate-400 truncate max-w-[180px]">
+                            {q.projectLocation}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                        {formatDate(q.quotationDate)}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                        {formatDate(q.validUntil)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right text-slate-700 font-mono">
+                        {formatCurrency(q.taxableAmount)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-black text-slate-900 font-mono">
+                        {formatCurrency(q.estimatedGrandTotal)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${getQuotationStatusBadge(
+                            q.status
+                          )}`}
+                        >
+                          {q.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-6 text-right whitespace-nowrap">
+                        <Link
+                          to={`/quotations/${q._id}`}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-900 hover:underline"
+                        >
+                          View <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Client Invoices Ledger */}

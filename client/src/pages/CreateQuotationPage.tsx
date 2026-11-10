@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link, useOutletContext } from 'react-router-dom';
+import { useNavigate, useParams, Link, useOutletContext, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -30,6 +30,7 @@ import { useToast } from '../context/ToastContext';
 export const CreateQuotationPage: React.FC = () => {
   const { onOpenSidebar } = useOutletContext<{ onOpenSidebar: () => void }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
   const toast = useToast();
@@ -123,6 +124,10 @@ export const CreateQuotationPage: React.FC = () => {
         }
         if (setts?.quotationSettings?.defaultNotes) {
           setNotes(setts.quotationSettings.defaultNotes);
+        }
+
+        if (!isEditMode && location.state?.preselectedClientId) {
+          setSelectedClientId(location.state.preselectedClientId);
         }
 
         // If editing existing quotation

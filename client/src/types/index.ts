@@ -254,6 +254,9 @@ export interface DashboardSummary {
   totalAdvances?: number;
   outstandingAmount: number;
   paidInvoicesCount: number;
+  partiallyPaidCount?: number;
+  issuedCount?: number;
+  overdueCount?: number;
   pendingInvoicesCount: number;
   draftInvoicesCount: number;
   clientCount: number;

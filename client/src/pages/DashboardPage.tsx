@@ -310,6 +310,87 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Tax Invoice & Billing Pipeline - Official GST Revenue & Cashflow Metrics */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-black text-white shadow-soft">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>Tax Invoice &amp; Billing Pipeline</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase font-sans">
+                    Verified GST Workflow
+                  </span>
+                </h3>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  Official GST billing statements, verified receivables &amp; stage-wise collection tracking
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/invoices/new"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-black hover:bg-slate-800 rounded-xl transition-all shadow-soft"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create Invoice</span>
+              </Link>
+              <Link
+                to="/invoices"
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                <span>View Invoices</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5 pt-1">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Invoices</span>
+              <p className="text-xl font-black text-slate-900 font-mono mt-1">
+                {summary?.totalInvoices || 0}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Billed contracts</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Fully Settled</span>
+              <p className="text-xl font-black text-emerald-800 font-mono mt-1">
+                {summary?.paidInvoicesCount || 0}
+              </p>
+              <p className="text-[10px] text-emerald-600 mt-0.5">Zero balance due</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">Partially Paid</span>
+              <p className="text-xl font-black text-blue-800 font-mono mt-1">
+                {summary?.partiallyPaidCount || 0}
+              </p>
+              <p className="text-[10px] text-blue-600 mt-0.5">Active running payments</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">Pending / Overdue</span>
+              <p className="text-xl font-black text-amber-800 font-mono mt-1">
+                {Math.max(0, (summary?.pendingInvoicesCount || 0) - (summary?.partiallyPaidCount || 0))}
+              </p>
+              <p className="text-[10px] text-amber-600 mt-0.5">Awaiting collection</p>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 p-3.5 rounded-2xl bg-slate-900 text-white shadow-soft">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-300">Outstanding Due</span>
+              <p className="text-lg font-black text-white font-mono mt-1 truncate">
+                {formatCurrency(outstanding)}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Unsettled receivables</p>
+            </div>
+          </div>
+        </div>
+
         {/* Quotation Pipeline Overview - Distinct Commercial Estimation Metrics */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">

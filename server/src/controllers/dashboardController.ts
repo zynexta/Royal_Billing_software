@@ -79,6 +79,9 @@ export async function getDashboardSummary(req: Request, res: Response) {
     const totalAdvances = round2(payments.filter((p) => !p.invoiceId).reduce((sum, p) => sum + p.amount, 0));
 
     const paidInvoicesCount = invoices.filter((inv) => inv.status === 'Paid').length;
+    const partiallyPaidCount = invoices.filter((inv) => inv.status === 'Partially Paid').length;
+    const issuedCount = invoices.filter((inv) => inv.status === 'Issued').length;
+    const overdueCount = invoices.filter((inv) => inv.status === 'Overdue').length;
     const pendingInvoicesCount = invoices.filter(
       (inv) => inv.status === 'Issued' || inv.status === 'Partially Paid' || inv.status === 'Overdue'
     ).length;
@@ -106,6 +109,9 @@ export async function getDashboardSummary(req: Request, res: Response) {
       totalAdvances,
       outstandingAmount,
       paidInvoicesCount,
+      partiallyPaidCount,
+      issuedCount,
+      overdueCount,
       pendingInvoicesCount,
       draftInvoicesCount,
       clientCount,

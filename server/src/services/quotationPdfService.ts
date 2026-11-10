@@ -157,6 +157,16 @@ export function generateQuotationPDF(
       const email = profile?.email || snapshot?.email || 'royalengandconstruction@gmail.com';
       const gstin = profile?.gstin || snapshot?.gstin || '32GCDPP0980D1ZT';
 
+      // Resolve Signatory Details
+      const signatoryCompany =
+        settings?.invoiceSettings?.signatoryCompany ||
+        (companySubtitle
+          ? `FOR ${companyName} ${companySubtitle}`.toUpperCase()
+          : `FOR ${companyName}`.toUpperCase());
+      const signatoryTitle =
+        settings?.invoiceSettings?.signatoryTitle || 'Authorized Company Signatory';
+      const signatureImage = settings?.invoiceSettings?.signatureImage;
+
       const client = quotation.clientSnapshot;
       const logoPath = getAssetPath('logo.png');
       const hasLogo = fs.existsSync(logoPath);
@@ -299,11 +309,12 @@ export function generateQuotationPDF(
             characterSpacing: 0.8,
           });
 
+        const clientDisplayName = (client?.clientName || (client as any)?.name || 'VALUED CLIENT').toUpperCase();
         doc
           .font(FONT_BOLD)
           .fontSize(9.5)
           .fillColor(COLOR_BLACK)
-          .text(client.clientName.toUpperCase(), custBoxX + 10, metaY + 20, {
+          .text(clientDisplayName, custBoxX + 10, metaY + 20, {
             width: custBoxW - 20,
           });
 
@@ -777,7 +788,7 @@ export function generateQuotationPDF(
       // ==========================================
       // SECTION I: CLIENT ACCEPTANCE & AUTHORIZED SIGNATURE
       // ==========================================
-      const sigH = 60;
+      const sigH = 68;
       if (currentY + sigH > pageBottomLimit) {
         doc.addPage();
         currentY = drawContinuationHeader();
@@ -796,47 +807,51 @@ export function generateQuotationPDF(
 
       doc
         .font(FONT_BOLD)
-        .fontSize(7.5)
-        .fillColor(COLOR_MUTED)
-        .text('CLIENT ACCEPTANCE & APPROVAL', 44, currentY + 8);
+        .fontSize(7.2)
+        .fillColor(COLOR_DARK_GRAY)
+        .text('CLIENT ACCEPTANCE & APPROVAL', 44, currentY + 7);
 
       if (quotation.status === 'Accepted' && quotation.approvalDetails) {
         doc
           .font(FONT_BOLD)
-          .fontSize(8)
+          .fontSize(7.8)
           .fillColor('#059669')
-          .text(`✓ APPROVED BY: ${quotation.approvalDetails.approvedBy}`, 44, currentY + 22);
+          .text(`✓ APPROVED BY: ${quotation.approvalDetails.approvedBy}`, 44, currentY + 21);
         const appDateStr = new Date(quotation.approvalDetails.approvalDate).toLocaleDateString(
           'en-IN',
           { day: '2-digit', month: 'short', year: 'numeric' }
         );
         doc
           .font(FONT_REGULAR)
-          .fontSize(7)
+          .fontSize(6.8)
           .fillColor(COLOR_DARK_GRAY)
-          .text(`Date: ${appDateStr}  |  Via: ${quotation.approvalDetails.approvalMethod}`, 44, currentY + 34);
-        doc
-          .font(FONT_REGULAR)
-          .fontSize(6.5)
-          .fillColor(COLOR_MUTED)
-          .text('Authorized Client Signatory', 44, currentY + sigH - 12);
+          .text(`Date: ${appDateStr}  |  Via: ${quotation.approvalDetails.approvalMethod}`, 44, currentY + 33);
       } else {
         doc
           .font(FONT_REGULAR)
           .fontSize(7)
           .fillColor(COLOR_MUTED)
-          .text('Signature: .....................................................', 44, currentY + 26);
+          .text('Signature: .....................................................', 44, currentY + 23);
         doc
           .font(FONT_REGULAR)
           .fontSize(7)
           .fillColor(COLOR_MUTED)
-          .text('Client Name: .................................................', 44, currentY + 38);
-        doc
-          .font(FONT_REGULAR)
-          .fontSize(6.5)
-          .fillColor(COLOR_MUTED)
-          .text('Authorized Client Signatory', 44, currentY + sigH - 12);
+          .text('Client Name: .................................................', 44, currentY + 35);
       }
+
+      // Divider line under client area
+      doc
+        .moveTo(44, currentY + 49)
+        .lineTo(36 + sigBoxW - 14, currentY + 49)
+        .strokeColor(COLOR_BORDER)
+        .lineWidth(0.6)
+        .stroke();
+
+      doc
+        .font(FONT_REGULAR)
+        .fontSize(6.8)
+        .fillColor(COLOR_MUTED)
+        .text('Authorized Client Signatory', 44, currentY + 54);
 
       // Right: Company Signatory Box
       const compSigX = 36 + sigBoxW + 20;
@@ -850,14 +865,61 @@ export function generateQuotationPDF(
 
       doc
         .font(FONT_BOLD)
-        .fontSize(7.5)
-        .fillColor(COLOR_MUTED)
-        .text('FOR ROYAL ENGINEERING & CONSTRUCTION', compSigX + 8, currentY + 8);
+        .fontSize(7.2)
+        .fillColor(COLOR_DARK_GRAY)
+        .text(signatoryCompany, compSigX, currentY + 7, { align: 'center', width: sigBoxW });
+
+      // Embed custom signature image or Draw Flowing Executive Digital Signature
+      if (signatureImage && signatureImage.startsWith('data:image')) {
+        try {
+          const base64Data = signatureImage.split(',')[1];
+          const imgBuffer = Buffer.from(base64Data, 'base64');
+          doc.image(imgBuffer, compSigX + (sigBoxW - 120) / 2, currentY + 17, {
+            fit: [120, 28],
+            align: 'center',
+            valign: 'center',
+          });
+        } catch (e) {
+          drawVectorSig(doc, compSigX, currentY, sigBoxW);
+        }
+      } else {
+        drawVectorSig(doc, compSigX, currentY, sigBoxW);
+      }
+
+      function drawVectorSig(d: any, sx: number, fy: number, boxWidth: number) {
+        d.save()
+          .strokeColor(COLOR_BLACK)
+          .lineWidth(1.3)
+          .lineCap('round')
+          .lineJoin('round');
+
+        const sigSpan = 90;
+        const sX = sx + Math.max(10, Math.round((boxWidth - sigSpan) / 2));
+        const sY = fy + 33;
+
+        d.moveTo(sX, sY)
+          .bezierCurveTo(sX + 4, sY - 14, sX + 10, sY - 16, sX + 16, sY - 2)
+          .bezierCurveTo(sX + 20, sY + 7, sX + 13, sY + 9, sX + 22, sY + 3)
+          .bezierCurveTo(sX + 29, sY - 11, sX + 39, sY - 9, sX + 45, sY + 3)
+          .bezierCurveTo(sX + 51, sY + 8, sX + 59, sY - 7, sX + 67, sY + 2)
+          .bezierCurveTo(sX + 72, sY + 6, sX + 82, sY + 4, sX + 90, sY + 5)
+          .stroke();
+        d.restore();
+      }
+
+      // Divider line under signature
       doc
-        .font(FONT_REGULAR)
-        .fontSize(7)
-        .fillColor(COLOR_MUTED)
-        .text('Authorized Company Signatory', compSigX + 8, currentY + sigH - 12);
+        .moveTo(compSigX + 24, currentY + 49)
+        .lineTo(compSigX + sigBoxW - 24, currentY + 49)
+        .strokeColor(COLOR_BORDER)
+        .lineWidth(0.6)
+        .stroke();
+
+      doc
+        .font(FONT_BOLD)
+        .fontSize(7.2)
+        .fillColor(COLOR_BLACK)
+        .text(signatoryTitle, compSigX, currentY + 54, { align: 'center', width: sigBoxW });
 
       // ==========================================
       // SECTION J: BUFFERED FOOTER ON ALL PAGES

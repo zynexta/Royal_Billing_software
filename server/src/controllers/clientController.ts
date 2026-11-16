@@ -3,6 +3,7 @@ import { Client } from '../models/Client.js';
 import { Invoice } from '../models/Invoice.js';
 import { Quotation } from '../models/Quotation.js';
 import { Payment } from '../models/Payment.js';
+import { Expense } from '../models/Expense.js';
 import { sendError, sendSuccess } from '../utils/response.js';
 import { AuthenticatedRequest } from '../middleware/auth.js';
 import { logAudit } from '../services/auditService.js';
@@ -137,15 +138,17 @@ export async function getClientById(req: Request, res: Response) {
       return sendError(res, 'Client not found', 404);
     }
 
-    const [invoices, quotations, payments] = await Promise.all([
+    const [invoices, quotations, payments, expenses] = await Promise.all([
       Invoice.find({ clientId: client._id }).sort({ invoiceDate: -1 }),
       Quotation.find({ clientId: client._id }).sort({ quotationDate: -1, createdAt: -1 }),
       Payment.find({ clientId: client._id, status: 'Completed' }).sort({ createdAt: -1, paymentDate: -1 }),
+      Expense.find({ clientId: client._id }).sort({ expenseDate: -1, createdAt: -1 }),
     ]);
 
     const activeInvoices = invoices.filter((i) => i.status !== 'Draft' && i.status !== 'Cancelled');
     const totalBilled = round2(activeInvoices.reduce((acc, i) => acc + i.grandTotal, 0));
     const totalPaid = round2(payments.reduce((acc, p) => acc + p.amount, 0));
+    const totalExpenses = round2(expenses.reduce((acc, e) => acc + (e.amount || 0), 0));
 
     // Calculate actual unpaid invoice balance across all active projects for this client
     const outstandingBalance = round2(
@@ -163,12 +166,15 @@ export async function getClientById(req: Request, res: Response) {
         totalBilled: round2(totalBilled),
         totalPaid: round2(totalPaid),
         outstandingBalance,
+        totalExpenses,
         invoiceCount: invoices.length,
         quotationCount: quotations.length,
+        expenseCount: expenses.length,
       },
       invoices,
       quotations,
       payments,
+      expenses,
     });
   } catch (error) {
     return sendError(res, 'Failed to fetch client details', 500, (error as Error).message);

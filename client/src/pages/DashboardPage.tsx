@@ -169,6 +169,14 @@ export const DashboardPage: React.FC = () => {
               <span>New Quotation</span>
             </Link>
 
+            <Link
+              to="/expenses"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl shadow-soft hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] whitespace-nowrap"
+            >
+              <Wallet className="w-3.5 h-3.5 text-slate-600" />
+              <span>Expenses</span>
+            </Link>
+
             <button
               onClick={() => setIsPaymentModalOpen(true)}
               className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl shadow-soft hover:bg-emerald-100 transition-all active:scale-[0.98] whitespace-nowrap"
@@ -468,6 +476,72 @@ export const DashboardPage: React.FC = () => {
                 {formatCurrency(summary?.quotationSummary?.estimatedPipelineValue || 0)}
               </p>
               <p className="text-[10px] text-slate-500 mt-0.5">Active proposals value</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Expense Outlay - Cost Tracking & Expenditure Summary */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-soft p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-black text-white shadow-soft">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>Project Expense Outlays</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200 uppercase font-sans">
+                    Cost Center
+                  </span>
+                </h3>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  Labour wages, material purchases &amp; operational site costs (strictly isolated from verified revenue)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                to="/expenses"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                <span>View Expense Ledger</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Total Expenses Incurred
+              </span>
+              <p className="text-xl font-black text-slate-900 font-mono mt-1">
+                {formatCurrency(summary?.totalExpenses || 0)}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                {period === 'all' ? 'All-time site expenditure' : `Expenditure for selected ${period.replace('_', ' ')}`}
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Audited Expense Entries
+              </span>
+              <p className="text-xl font-black text-slate-900 font-mono mt-1">
+                {summary?.totalExpenseEntries || 0}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Logged expense vouchers</p>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Projects with Expenses
+              </span>
+              <p className="text-xl font-black text-slate-900 font-mono mt-1">
+                {summary?.distinctExpenseProjectsCount || 0}
+              </p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Active sites with costs</p>
             </div>
           </div>
         </div>

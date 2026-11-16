@@ -96,3 +96,26 @@ export const updateSettingsSchema = z.object({
   }).partial().optional(),
 });
 
+export const createExpenseSchema = z.object({
+  clientId: z.string().min(1, 'Client is required'),
+  projectName: z.string().min(1, 'Project name is required').trim(),
+  projectLocation: z.string().optional(),
+  category: z.enum([
+    'Labour Charges',
+    'Material Purchase',
+    'Transportation',
+    'Equipment Rental',
+    'Food & Accommodation',
+    'Other',
+  ]),
+  description: z.string().min(1, 'Description is required').trim(),
+  amount: z.number().positive('Amount must be greater than zero'),
+  expenseDate: z.string().or(z.date()).default(() => new Date()),
+  paymentMethod: z.enum(['Cash', 'Bank Transfer', 'UPI', 'Other']).default('Cash'),
+  notes: z.string().optional(),
+  receiptUrl: z.string().optional(),
+});
+
+export const updateExpenseSchema = createExpenseSchema.partial();
+
+

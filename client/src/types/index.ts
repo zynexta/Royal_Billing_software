@@ -48,6 +48,16 @@ export interface ApprovalDetails {
   approvalNotes?: string;
 }
 
+export type ExpenseCategory =
+  | 'Labour Charges'
+  | 'Material Purchase'
+  | 'Transportation'
+  | 'Equipment Rental'
+  | 'Food & Accommodation'
+  | 'Other';
+
+export type ExpensePaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Other';
+
 export type PaymentMethod = 'Cash' | 'UPI' | 'Bank Transfer' | 'Cheque' | 'Other';
 export type SupplyType = 'Intra-State' | 'Inter-State';
 
@@ -194,6 +204,66 @@ export interface Payment {
   updatedAt: string;
 }
 
+export interface Expense {
+  _id: string;
+  clientId:
+    | {
+        _id: string;
+        clientName: string;
+        phone: string;
+        city?: string;
+        billingAddress?: string;
+        gstin?: string;
+      }
+    | string;
+  clientSnapshot: {
+    clientName: string;
+    phone?: string;
+    city?: string;
+  };
+  projectName: string;
+  projectLocation?: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  paymentMethod: ExpensePaymentMethod;
+  notes?: string;
+  receiptUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExpenseSummary {
+  totalExpenses: number;
+  thisMonthExpenses: number;
+  projectsCount: number;
+  totalEntries: number;
+  filteredTotal: number;
+  categoryBreakdown: Record<string, number>;
+}
+
+export interface ProjectExpenseSummary {
+  projectName: string;
+  projectLocation?: string;
+  clientId?: string;
+  clientName: string;
+  totalExpenses: number;
+  expenseCount: number;
+  categoryBreakdown: Record<string, number>;
+  lastExpenseDate: string;
+}
+
+export interface ProjectExpenseDetails {
+  projectName: string;
+  projectLocation?: string;
+  client: { clientName: string; phone?: string; city?: string } | null;
+  totalExpenses: number;
+  expenseCount: number;
+  categoryBreakdown: Record<string, { total: number; count: number }>;
+  expenses: Expense[];
+}
+
 export interface CompanySettings {
   _id: string;
   companyProfile: {
@@ -260,6 +330,9 @@ export interface DashboardSummary {
   pendingInvoicesCount: number;
   draftInvoicesCount: number;
   clientCount: number;
+  totalExpenses?: number;
+  totalExpenseEntries?: number;
+  distinctExpenseProjectsCount?: number;
   quotationSummary?: {
     totalQuotations: number;
     sentQuotations: number;

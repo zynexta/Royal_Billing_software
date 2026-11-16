@@ -15,6 +15,7 @@ import clientRoutes from './routes/clientRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import quotationRoutes from './routes/quotationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import expenseRoutes from './routes/expenseRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import { seedInitialData } from './scripts/seed.js';
 
@@ -69,6 +70,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/quotations', quotationRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/expenses', expenseRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Serve frontend static build if available

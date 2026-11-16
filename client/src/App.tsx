@@ -16,6 +16,7 @@ import { QuotationsPage } from './pages/QuotationsPage';
 import { CreateQuotationPage } from './pages/CreateQuotationPage';
 import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
 import { PaymentsPage } from './pages/PaymentsPage';
+import { ExpensesPage } from './pages/ExpensesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -44,6 +45,7 @@ export function App() {
                 <Route path="/invoices/:id" element={<InvoiceDetailsPage />} />
                 <Route path="/invoices/:id/edit" element={<CreateInvoicePage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>

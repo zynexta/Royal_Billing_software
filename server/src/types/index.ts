@@ -1,5 +1,15 @@
 export type UserRole = 'admin' | 'staff';
 
+export type ExpenseCategory =
+  | 'Labour Charges'
+  | 'Material Purchase'
+  | 'Transportation'
+  | 'Equipment Rental'
+  | 'Food & Accommodation'
+  | 'Other';
+
+export type ExpensePaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Other';
+
 export type PaymentMethod = 'Cash' | 'UPI' | 'Bank Transfer' | 'Cheque' | 'Other';
 
 export type InvoiceStatus = 'Draft' | 'Issued' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Cancelled';

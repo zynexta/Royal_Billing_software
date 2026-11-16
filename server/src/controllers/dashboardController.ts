@@ -3,6 +3,7 @@ import { Invoice } from '../models/Invoice.js';
 import { Quotation } from '../models/Quotation.js';
 import { Payment } from '../models/Payment.js';
 import { Client } from '../models/Client.js';
+import { Expense } from '../models/Expense.js';
 import { sendError, sendSuccess } from '../utils/response.js';
 import { round2 } from '../services/calculationService.js';
 
@@ -35,19 +36,22 @@ export async function getDashboardSummary(req: Request, res: Response) {
 
     const invoiceQuery: any = { status: { $ne: 'Cancelled' } };
     const paymentQuery: any = { status: 'Completed' };
-
     const quotationQuery: any = {};
+    const expenseQuery: any = {};
+
     if (Object.keys(dateFilter).length > 0) {
       invoiceQuery.invoiceDate = dateFilter;
       paymentQuery.paymentDate = dateFilter;
       quotationQuery.quotationDate = dateFilter;
+      expenseQuery.expenseDate = dateFilter;
     }
 
-    const [invoices, payments, clientCount, quotations] = await Promise.all([
+    const [invoices, payments, clientCount, quotations, expenses] = await Promise.all([
       Invoice.find(invoiceQuery),
       Payment.find(paymentQuery),
       Client.countDocuments({ isArchived: false }),
       Quotation.find(quotationQuery),
+      Expense.find(expenseQuery),
     ]);
 
     const activeInvoices = invoices.filter((inv) => inv.status !== 'Draft' && inv.status !== 'Cancelled');
@@ -101,6 +105,13 @@ export async function getDashboardSummary(req: Request, res: Response) {
       activePipelineQuotations.reduce((sum, q) => sum + (q.estimatedGrandTotal || 0), 0)
     );
 
+    // Project Expense metrics (strictly separated from invoice revenue and cash collections)
+    const totalExpenses = round2(expenses.reduce((sum, e) => sum + (e.amount || 0), 0));
+    const totalExpenseEntries = expenses.length;
+    const distinctExpenseProjectsCount = new Set(
+      expenses.map((e) => e.projectName?.trim().toLowerCase()).filter(Boolean)
+    ).size;
+
     return sendSuccess(res, {
       totalInvoices,
       totalProjectValue,
@@ -115,6 +126,9 @@ export async function getDashboardSummary(req: Request, res: Response) {
       pendingInvoicesCount,
       draftInvoicesCount,
       clientCount,
+      totalExpenses,
+      totalExpenseEntries,
+      distinctExpenseProjectsCount,
       quotationSummary: {
         totalQuotations,
         sentQuotations,

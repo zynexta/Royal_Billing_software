@@ -6,6 +6,7 @@ import {
   FileText,
   ClipboardList,
   CreditCard,
+  Wallet,
   Settings,
   LogOut,
   Building2,
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       title: 'FINANCIAL',
       items: [
         { label: 'Payments', to: '/payments', icon: CreditCard },
+        { label: 'Expenses', to: '/expenses', icon: Wallet },
       ],
     },
     {

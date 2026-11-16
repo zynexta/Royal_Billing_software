@@ -134,6 +134,30 @@ export const paymentService = {
   reversePayment: (id: string, reason: string) => api.post(`/payments/${id}/reverse`, { reason }),
 };
 
+// Expense Service
+export const expenseService = {
+  getExpenses: (params?: {
+    search?: string;
+    clientId?: string;
+    project?: string;
+    projectName?: string;
+    category?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/expenses', { params }),
+  getExpenseById: (id: string) => api.get(`/expenses/${id}`),
+  createExpense: (data: any) => api.post('/expenses', data),
+  updateExpense: (id: string, data: any) => api.put(`/expenses/${id}`, data),
+  deleteExpense: (id: string) => api.delete(`/expenses/${id}`),
+  getClientProjects: (clientId: string) => api.get(`/expenses/client-projects/${clientId}`),
+  getProjectExpenses: () => api.get('/expenses/projects'),
+  getProjectDetails: (projectName: string, clientId?: string) =>
+    api.get('/expenses/project-details', { params: { projectName, clientId } }),
+};
+
 // Settings Service
 export const settingsService = {
   getSettings: () => api.get('/settings'),

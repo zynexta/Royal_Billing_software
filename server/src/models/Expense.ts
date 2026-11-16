@@ -1,12 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type ExpenseCategory =
-  | 'Labour Charges'
-  | 'Material Purchase'
-  | 'Transportation'
-  | 'Equipment Rental'
-  | 'Food & Accommodation'
-  | 'Other';
+export type ExpenseCategory = string;
 
 export type ExpensePaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Other';
 
@@ -55,15 +49,8 @@ const ExpenseSchema = new Schema<IExpense>(
     },
     category: {
       type: String,
-      enum: [
-        'Labour Charges',
-        'Material Purchase',
-        'Transportation',
-        'Equipment Rental',
-        'Food & Accommodation',
-        'Other',
-      ],
       required: [true, 'Category is required'],
+      trim: true,
       index: true,
     },
     description: {
@@ -108,3 +95,4 @@ ExpenseSchema.index({ expenseDate: -1 });
 ExpenseSchema.index({ category: 1, expenseDate: -1 });
 
 export const Expense = mongoose.model<IExpense>('Expense', ExpenseSchema);
+

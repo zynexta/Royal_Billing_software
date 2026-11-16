@@ -29,7 +29,7 @@ import { ProjectExpenseModal } from '../components/expenses/ProjectExpenseModal'
 import { ConfirmationModal } from '../components/common/ConfirmationModal';
 import { useToast } from '../context/ToastContext';
 
-const CATEGORIES = [
+const DEFAULT_FILTER_CATEGORIES = [
   'All',
   'Labour Charges',
   'Material Purchase',
@@ -46,6 +46,7 @@ export const ExpensesPage: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -98,6 +99,27 @@ export const ExpensesPage: React.FC = () => {
     }, 250);
     return () => clearTimeout(delay);
   }, [search, categoryFilter, projectFilter, startDate, endDate]);
+
+  useEffect(() => {
+    expenseService
+      .getCategories()
+      .then((res) => {
+        if (Array.isArray(res.data?.data)) {
+          setAvailableCategories(res.data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Merged dynamic categories for filter bar
+  const allCategories = useMemo(() => {
+    const set = new Set<string>(DEFAULT_FILTER_CATEGORIES);
+    availableCategories.forEach((c) => set.add(c));
+    expenses.forEach((e) => {
+      if (e.category?.trim()) set.add(e.category.trim());
+    });
+    return Array.from(set);
+  }, [availableCategories, expenses]);
 
   // Unique project names for project filter dropdown
   const uniqueProjects = useMemo(() => {
@@ -331,7 +353,7 @@ export const ExpensesPage: React.FC = () => {
 
           {/* Category Filter Badges */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
-            {CATEGORIES.map((cat) => (
+            {allCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
@@ -618,3 +640,4 @@ export const ExpensesPage: React.FC = () => {
     </>
   );
 };
+

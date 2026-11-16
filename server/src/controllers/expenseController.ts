@@ -400,6 +400,115 @@ export async function createExpense(req: AuthenticatedRequest, res: Response) {
 }
 
 /**
+ * GET /api/expenses/categories
+ * Returns default categories merged with recorded custom categories
+ */
+export async function getExpenseCategories(req: Request, res: Response) {
+  try {
+    const DEFAULT_CATEGORIES = [
+      'Labour Charges',
+      'Material Purchase',
+      'Transportation',
+      'Equipment Rental',
+      'Food & Accommodation',
+      'Other',
+    ];
+
+    const recordedCategories = await Expense.distinct('category');
+    const combinedSet = new Set<string>(DEFAULT_CATEGORIES);
+    recordedCategories.forEach((cat) => {
+      if (cat && typeof cat === 'string' && cat.trim()) {
+        combinedSet.add(cat.trim());
+      }
+    });
+
+    return sendSuccess(res, Array.from(combinedSet));
+  } catch (error) {
+    return sendError(res, 'Failed to fetch categories', 500, (error as Error).message);
+  }
+}
+
+/**
+ * POST /api/expenses/batch
+ * Record multiple project expenses in a single submission
+ */
+export async function createBatchExpenses(req: AuthenticatedRequest, res: Response) {
+  try {
+    const {
+      clientId,
+      projectName,
+      projectLocation,
+      defaultDate,
+      defaultPaymentMethod,
+      items,
+    } = req.body;
+
+    const client = await Client.findById(clientId);
+    if (!client) {
+      return sendError(res, 'Client not found', 404);
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return sendError(res, 'At least one expense item is required', 400);
+    }
+
+    const docsToInsert = items.map((item: any) => {
+      const dateVal = item.expenseDate || defaultDate;
+      return {
+        clientId: client._id,
+        clientSnapshot: {
+          clientName: client.clientName,
+          phone: client.phone,
+          city: client.city,
+        },
+        projectName: projectName.trim(),
+        projectLocation: projectLocation?.trim() || '',
+        category: (item.category || 'Other').trim(),
+        description: item.description.trim(),
+        amount: round2(Number(item.amount)),
+        expenseDate: dateVal ? new Date(dateVal) : new Date(),
+        paymentMethod: item.paymentMethod || defaultPaymentMethod || 'Cash',
+        notes: item.notes?.trim() || '',
+        receiptUrl: item.receiptUrl?.trim() || '',
+      };
+    });
+
+    const createdExpenses = await Expense.insertMany(docsToInsert);
+
+    const totalBatchAmount = round2(
+      docsToInsert.reduce((sum, d) => sum + d.amount, 0)
+    );
+
+    await logAudit({
+      action: 'BATCH_EXPENSES_RECORDED',
+      entityType: 'Expense',
+      entityId: createdExpenses[0]?._id?.toString(),
+      userId: req.user?.id,
+      userName: req.user?.name,
+      details: {
+        projectName: projectName.trim(),
+        clientName: client.clientName,
+        itemCount: createdExpenses.length,
+        totalAmount: totalBatchAmount,
+      },
+    });
+
+    return sendSuccess(
+      res,
+      {
+        count: createdExpenses.length,
+        totalAmount: totalBatchAmount,
+        expenses: createdExpenses,
+      },
+      `${createdExpenses.length} expenses recorded successfully`,
+      201
+    );
+  } catch (error) {
+    return sendError(res, 'Failed to record batch expenses', 500, (error as Error).message);
+  }
+}
+
+/**
  * PUT /api/expenses/:id
  */
 export async function updateExpense(req: AuthenticatedRequest, res: Response) {

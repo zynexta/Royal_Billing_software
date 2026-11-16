@@ -1,12 +1,6 @@
 export type UserRole = 'admin' | 'staff';
 
-export type ExpenseCategory =
-  | 'Labour Charges'
-  | 'Material Purchase'
-  | 'Transportation'
-  | 'Equipment Rental'
-  | 'Food & Accommodation'
-  | 'Other';
+export type ExpenseCategory = string;
 
 export type ExpensePaymentMethod = 'Cash' | 'Bank Transfer' | 'UPI' | 'Other';
 
